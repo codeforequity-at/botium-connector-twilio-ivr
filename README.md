@@ -234,3 +234,4 @@ Same public hostname for Botium webhook service. If you are using ngrok, then it
 * Increasing STT accuracy 
 * Asserter to check call state 
 * Better solution for one me-says case
+* Cancel phone call if conversation test finished succesful 
