@@ -1,0 +1,7 @@
+greetings
+
+#bot
+Hi.
+
+#me
+Hello!

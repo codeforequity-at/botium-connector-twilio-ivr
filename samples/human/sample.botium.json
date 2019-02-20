@@ -1,0 +1,15 @@
+{
+  "botium": {
+    "Capabilities": {
+      "PROJECTNAME": "Botium Project Twilio IVR",
+      "CONTAINERMODE": "twilio-ivr",
+      "TWILIO_IVR_ACCOUNT_SID": "...",
+      "TWILIO_IVR_AUTH_TOKEN": "...",
+      "TWILIO_IVR_FROM": "...",
+      "TWILIO_IVR_TO": "...",
+      "TWILIO_IVR_REDISURL" : "...",
+      "TWILIO_IVR_HOST": "...",
+      "TWILIO_LANGUAGE_CODE": "en-US"
+    }
+  }
+}
