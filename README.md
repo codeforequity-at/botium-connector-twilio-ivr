@@ -152,7 +152,7 @@ _--port_: Local port to listen (optional, default _5001_)
 
 _--host_: Public host name. If you are using ngrok, then it looks like this: 'http://xxxxxxxx.ngrok.io'
 
-_--languageCode_: The language code used for the call, like 'en-US' (optional, default _en-US_)
+_--languageCode_: The language code used for the call, like 'en-US' (optional, default _en-US_) ([All language code](https://www.twilio.com/docs/voice/twiml/gather#languagetags))
 
 _--redisurl_: Redis connection url
 
