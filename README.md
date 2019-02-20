@@ -189,10 +189,9 @@ Botium setup is ready, you can begin to write your [BotiumScript](https://github
 There is a small demo in [samples/human](./samples/human) with Botium Bindings.  
 
 To start it you have to create botium.json. For help see Supported Capabilities. 
+So to start it you have to create botium.json from [sample.botium.json](./samples/human/sample.botium.json)
 
 This demo requires you to emulate bot, for TWILIO_IVR_TO capability use our own number.
-
-So to start it you have to create botium.json from [sample.botium.json](./samples/IoT/sample.botium.json)
  
  Afterwards:
 
