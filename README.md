@@ -1,9 +1,9 @@
 # Botium Connector for Twilio IVR
 
-[![NPM](https://nodei.co/npm/botium-connector-luis.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/botium-connector-luis/)
+[![NPM](https://nodei.co/npm/botium-connector-twilio-ivr.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/botium-connector-twilio-ivr/)
 
-[![Codeship Status for codeforequity-at/botium-connector-luis](https://app.codeship.com/projects/671767d0-0777-0137-514b-1ae61d02a015/status?branch=master)](https://app.codeship.com/projects/325831)
-[![npm version](https://badge.fury.io/js/botium-connector-luis.svg)](https://badge.fury.io/js/botium-connector-luis)
+[![Codeship Status for codeforequity-at/botium-connector-twilio-ivr](https://app.codeship.com/projects/184b7020-1d79-0137-4301-5aea4b3287ff/status?branch=master)](https://app.codeship.com/projects/329045)
+[![npm version](https://badge.fury.io/js/botium-connector-twilio-ivr.svg)](https://badge.fury.io/js/botium-connector-twilio-ivr)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
 
 This is a [Botium](https://github.com/codeforequity-at/botium-core) connector for testing IVR (Interactive Voice Response)
