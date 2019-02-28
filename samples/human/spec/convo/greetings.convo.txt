@@ -1,7 +1,9 @@
 greetings
 
 #bot
-Hi.
 
 #me
-Hello!
+Hello, Bot!
+
+#bot
+Goodbye

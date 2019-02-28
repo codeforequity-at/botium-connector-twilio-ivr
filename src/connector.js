@@ -14,10 +14,10 @@ const Capabilities = {
   TWILIO_IVR_FROM: 'TWILIO_IVR_FROM',
   TWILIO_IVR_TO: 'TWILIO_IVR_TO',
   TWILIO_IVR_REDISURL: 'TWILIO_IVR_REDISURL',
-  TWILIO_IVR_HOST: 'TWILIO_IVR_HOST'
+  TWILIO_IVR_PUBLICURL: 'TWILIO_IVR_PUBLICURL'
 }
 
-const RequiredCapabilities = Capabilities
+const { TWILIO_IVR_REDISURL, ...RequiredCapabilities } = Capabilities
 
 class BotiumConnectorTwilioIvr {
   constructor ({ queueBotSays, caps }) {
@@ -214,10 +214,10 @@ class BotiumConnectorTwilioIvr {
 
   _createCall () {
     const callParams = {
-      url: `${this.caps[Capabilities.TWILIO_IVR_HOST]}${WEBHOOK_ENDPOINT_START}`,
+      url: `${this.caps[Capabilities.TWILIO_IVR_PUBLICURL]}${WEBHOOK_ENDPOINT_START}`,
       to: this.caps[Capabilities.TWILIO_IVR_TO],
       from: this.caps[Capabilities.TWILIO_IVR_FROM],
-      statusCallback: `${this.caps[Capabilities.TWILIO_IVR_HOST]}${WEBHOOK_STATUS_CALLBACK}`,
+      statusCallback: `${this.caps[Capabilities.TWILIO_IVR_PUBLICURL]}${WEBHOOK_STATUS_CALLBACK}`,
       // Dont get busy event???
       statusCallbackEvent: ['completed', 'busy', 'failed', 'no-answer']
       // statusCallbackEvent: ['queued', 'ringing', 'in-progress', 'completed', 'busy', 'failed', 'no-answer', 'initiated', 'answered']

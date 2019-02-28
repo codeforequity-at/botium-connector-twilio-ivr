@@ -12,14 +12,11 @@ const {WEBHOOK_ENDPOINT_START, WEBHOOK_ENDPOINT_NEXT, WEBHOOK_STATUS_CALLBACK, g
 
 const startProxy = async (proxyParams) => {
   proxyParams = Object.assign({sendTextAsPhraseHint: true}, proxyParams)
-  if (!proxyParams.host) {
-    throw Error('Host is not set!')
+  if (!proxyParams.publicurl) {
+    throw Error('Public URL is not set!')
   }
   if (!proxyParams.port) {
     throw Error('Port is not set!')
-  }
-  if (!proxyParams.redisurl) {
-    throw Error('RedisUrl is not set!')
   }
   if (!proxyParams.languageCode) {
     throw Error('LanguageCode is not set!')
@@ -32,7 +29,7 @@ const startProxy = async (proxyParams) => {
 
 const _createWebhookResponse = (proxyParams, expressContext, convoStepContext) => {
   // naming parameter collections to better understanding
-  const {host, languageCode, sendTextAsPhraseHint} = proxyParams
+  const {publicurl, languageCode, sendTextAsPhraseHint} = proxyParams
   const {res} = expressContext
   const {userSays, hintBotSays, errorMessage, userDisconnected} = convoStepContext
 
@@ -45,7 +42,7 @@ const _createWebhookResponse = (proxyParams, expressContext, convoStepContext) =
   } else {
     let parameters = {
       input: 'speech',
-      action: `${host}${WEBHOOK_ENDPOINT_NEXT}`,
+      action: `${publicurl}${WEBHOOK_ENDPOINT_NEXT}`,
       language: languageCode
     }
 

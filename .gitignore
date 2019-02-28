@@ -66,3 +66,4 @@ typings/
 # Project dependent
 /samples/human/botium.json
 /test/botium.json
+dist

@@ -1,15 +1,8 @@
 {
-  "name": "Twilio IVR, Human",
+  "name": "botium-connector-twilio-ivr-sample-human",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
   "scripts": {
-    "test": "mocha spec"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "botium-bindings": "^2.0.2"
+    "test": "mocha spec --exit"
   },
   "botium": {
     "convodirs": [

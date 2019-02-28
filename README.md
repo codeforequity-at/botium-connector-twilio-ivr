@@ -150,11 +150,11 @@ There are several options required for running the Botium webhook service:
 
 _--port_: Local port to listen (optional, default _5001_)
 
-_--host_: Public host name. If you are using ngrok, then it looks like this: 'http://xxxxxxxx.ngrok.io'
+_--publicurl_: Public URL for the webhook. If you are using ngrok, then it looks like this: 'https://xxxxxxxx.ngrok.io'
 
 _--languageCode_: The language code used for the call, like 'en-US' (optional, default _en-US_) ([All language code](https://www.twilio.com/docs/voice/twiml/gather#languagetags))
 
-_--redisurl_: Redis connection url
+ _--redisurl_: Redis connection url, ex "redis://my-redis-host:6379" 
 
 Botium is providing the service, but you have to take care for connectivity and process management yourself:
 * If your server is not reachable from the internet, consider to use a service like [ngrok](https://ngrok.com/) for publishing your endpoint (If you use ngrok start it on the port of the Webhook Service)
@@ -198,7 +198,7 @@ This demo requires you to emulate bot, for TWILIO_IVR_TO capability use our own 
     > npm install
     > npm test
 
-If your phone is ringing pick it up, and say 'Hi'.
+If your phone is ringing pick it up, and say 'Hi' - and after Botium greets you back, say "goodbye" and hang up. Test case completed.
 
 ## Supported Capabilities
 
@@ -222,16 +222,20 @@ Arbitary telephone number. It must be [enabled](https://www.twilio.com/console/v
 
 ### TWILIO_IVR_REDISURL
 
-Same as for Botium webhook service. The default url for local redis is 'redis:localhost:6379'. 
+Same as for Botium webhook service. The default url for local redis is 'redis://localhost:6379'. 
 
-### TWILIO_IVR_HOST
+### TWILIO_IVR_PUBLICURL
 
-Same public hostname for Botium webhook service. If you are using ngrok, then it looks like this: 'http://xxxxxxxx.ngrok.io' 
+Same public url for Botium webhook service. If you are using ngrok, then it looks like this: 'http://xxxxxxxx.ngrok.io' 
+
+### WAITFORBOTTIMEOUT
+
+Depending on how fast your IVR responds, the default Botium timeout of 10 seconds can lead to timeout failures. Most likely you will have to increase it (see [here](https://github.com/codeforequity-at/botium-core/wiki/Botium-Configuration#waitforbottimeout) for more)
 
 ### Roadmap
 * DTMF support
 * Error case fail instead of timeout
-* Increasing STT accuracy 
+* Increasing STT accuracy
 * Asserter to check call state 
 * Better solution for one me-says case
 * Cancel phone call if conversation test finished succesful 

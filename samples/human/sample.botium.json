@@ -8,7 +8,7 @@
       "TWILIO_IVR_FROM": "...",
       "TWILIO_IVR_TO": "...",
       "TWILIO_IVR_REDISURL" : "...",
-      "TWILIO_IVR_HOST": "...",
+      "TWILIO_IVR_PUBLICURL": "...",
       "TWILIO_LANGUAGE_CODE": "en-US"
     }
   }

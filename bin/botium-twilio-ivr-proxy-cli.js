@@ -30,20 +30,20 @@ yargsCmd.usage('Botium Twilio IVR Proxy\n\nUsage: $0 [options]') // eslint-disab
     builder: (yargs) => {
       yargs
         .option('port', {
-          describe: 'Local port the proxy is listening to (also read from env variable "TWILIO_IVR_PORT")',
+          describe: 'Local port the proxy is listening to (also read from env variable "BOTIUM_TWILIO_IVR_PORT")',
           number: true,
           default: 5001
         })
-        .option('host', {
-          describe: 'Public host name (also read from env variable "TWILIO_IVR_HOST")',
+        .option('publicurl', {
+          describe: 'Public URL for the webhook ex "https://my-webhook-host.com" (also read from env variable "BOTIUM_TWILIO_IVR_PUBLICURL")',
           demandOption: true
         })
         .option('redisurl', {
-          describe: 'Redis connection url (also read from env variable "BOTIUM_FBPROXY_REDISURL")',
-          demandOption: true
+          describe: 'Redis connection url, ex "redis://my-redis-host:6379" (also read from env variable "BOTIUM_TWILIO_IVR_REDISURL")',
+          demandOption: false
         })
         .option('languageCode', {
-          describe: 'The language code used for the call, like "en-US" (also read from env variable TWILIO_IVR_LANGUAGE_CODE")',
+          describe: 'The language code used for the call, like "en-US" (also read from env variable BOTIUM_TWILIO_IVR_LANGUAGE_CODE")',
           default: 'en-US'
         })
     },
@@ -51,7 +51,7 @@ yargsCmd.usage('Botium Twilio IVR Proxy\n\nUsage: $0 [options]') // eslint-disab
   }))
   .option('verbose', {
     alias: 'v',
-    describe: 'Enable verbose output (also read from env variable "BOTIUM_FBPROXY_VERBOSE" - "1" means verbose)',
+    describe: 'Enable verbose output (also read from env variable "BOTIUM_TWILIO_IVR_VERBOSE" - "1" means verbose)',
     default: false
   })
   .argv
