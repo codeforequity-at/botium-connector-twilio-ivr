@@ -23,15 +23,22 @@ This connector is separated into two parts.
   * [Botium Box](https://www.botium.at)
 * The Connector, and the Webhooks are communicating via __Redis__  
 
+Supports DTMF (w is 0,5s delay)
+
+#me
+```
+BUTTON 0123456789*#w
+```
+
+
 ## Limitations
-1. Supports just speech request, and response. (No DTMF support)
-2. Twilio uses Text To Speech, and Speech To Text. A test can fail if 
+1. Twilio uses Text To Speech, and Speech To Text. A test can fail if 
 TTS or STT is not converting the text well.
-3. Special fail cases:
+2. Special fail cases:
    * If the dialed number is wrong, or not permitted, then the testcase will fail with error
    * If the bot answers the phone, then error handling follows Botium standards
    * In every other case (For example he is busy, or picks up the phone but does not say anything, or number is temporary not available...) then the test will fail with timeout
-4. Flow:
+3. Flow:
    * We expect that the bot starts the conversation. (Otherwise call initiated, but you got error while phone ringing: error sending to bot Error: Illegal state, conversation should be started by bot!)
    * Cant assert that call is ended like this:
 ```
@@ -233,7 +240,6 @@ Same public url for Botium webhook service. If you are using ngrok, then it look
 Depending on how fast your IVR responds, the default Botium timeout of 10 seconds can lead to timeout failures. Most likely you will have to increase it (see [here](https://github.com/codeforequity-at/botium-core/wiki/Botium-Configuration#waitforbottimeout) for more)
 
 ### Roadmap
-* DTMF support
 * Error case fail instead of timeout
 * Increasing STT accuracy
 * Asserter to check call state 

@@ -5,10 +5,7 @@ const bodyParser = require('body-parser')
 const debug = require('debug')('botium-twilio-ivr-proxy')
 const {VoiceResponse} = require('twilio').twiml
 const kue = require('kue')
-
 const {WEBHOOK_ENDPOINT_START, WEBHOOK_ENDPOINT_NEXT, WEBHOOK_STATUS_CALLBACK, getTopicName, EVENT_CALL_COMPLETED, EVENT_BOT_BUSY, EVENT_BOT_CALL_FAILED, EVENT_BOT_NO_ANSWER, EVENT_USER_DISCONNECTED, EVENT_CONFIRMED} = require('./shared')
-
-// const mapSidToContext = new Map()
 
 const startProxy = async (proxyParams) => {
   proxyParams = Object.assign({sendTextAsPhraseHint: true}, proxyParams)
@@ -27,11 +24,25 @@ const startProxy = async (proxyParams) => {
   await _setupEndpoints(proxyParams)
 }
 
-const _createWebhookResponse = (proxyParams, expressContext, convoStepContext) => {
+const _createWebhookResponse = (proxyParams, expressContext, communicationContext) => {
+  debug(`Creating webhook response from context ${util.inspect(communicationContext)}`)
   // naming parameter collections to better understanding
   const {publicurl, languageCode, sendTextAsPhraseHint} = proxyParams
   const {res} = expressContext
-  const {userSays, hintBotSays, errorMessage, userDisconnected} = convoStepContext
+  let {errorMessage} = communicationContext
+  const {userMessage, hintBotSays, userDisconnected} = communicationContext
+
+  if (!errorMessage && userMessage && userMessage.buttons) {
+    if (userMessage.buttons.length !== 1) {
+      errorMessage = `Invalid number of buttons. Requires exact one button and has "${util.inspect(userMessage.buttons)}"`
+    } else {
+      for (let key of userMessage.buttons[0].payload) {
+        if (!((key >= '0' && key <= '9') || key === '*' || key === '#' || key === 'w')) {
+          errorMessage = `Invalid character "${key}" in DTMF specification "${userMessage.buttons[0].payload}". Accepted keys are "0123456789 #* w" (w is for wait 0.5s)`
+        }
+      }
+    }
+  }
 
   if (errorMessage) {
     return res.send(500, errorMessage)
@@ -40,27 +51,34 @@ const _createWebhookResponse = (proxyParams, expressContext, convoStepContext) =
   if (userDisconnected) {
     response.hangup()
   } else {
-    let parameters = {
+    if (userMessage) {
+      // if we got buttons, then the buttons will be in messagetext too
+      // so lets check the button field first
+      if (userMessage.buttons) {
+        response.play({digits: userMessage.buttons[0].payload})
+      } else if (userMessage.messageText) {
+        response.say(
+          {
+            language: languageCode
+          },
+          userMessage.messageText
+        )
+      }
+    }
+
+    let gatherArgs = {
       input: 'speech',
       action: `${publicurl}${WEBHOOK_ENDPOINT_NEXT}`,
       language: languageCode
     }
 
     if (sendTextAsPhraseHint && hintBotSays) {
-      parameters.hints = hintBotSays
+      gatherArgs.hints = hintBotSays
     }
 
-    const gather = response.gather(parameters)
-
-    if (userSays) {
-      gather.say(
-        {
-          language: languageCode
-        },
-        userSays
-      )
-    }
+    response.gather(gatherArgs)
   }
+
   const result = response.toString()
   debug(`TwiML response created ${result}`)
 
@@ -94,6 +112,12 @@ const _setupEndpoints = (proxyParams) => {
   app.post(WEBHOOK_ENDPOINT_NEXT, (req, res) => {
     debug(`Event received on 'next' webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus} SpeechResult ${req.body.SpeechResult} `)
     _createJob(proxyParams, {req, res}, {botSays: req.body.SpeechResult})
+  })
+
+  // just test
+  app.get(WEBHOOK_ENDPOINT_NEXT, (req, res) => {
+    debug(`Event received on 'next' webhook BY GET. Body: ${util.inspect(req.body)}`)
+    res.status(200).end()
   })
 
   app.post(WEBHOOK_STATUS_CALLBACK, (req, res) => {
@@ -152,7 +176,7 @@ const _createJob = (proxyParams, {req, res}, {botSays, event}) => {
     } else if (result.event === EVENT_USER_DISCONNECTED) {
       _createWebhookResponse(proxyParams, {req, res}, {userDisconnected: true})
     } else {
-      _createWebhookResponse(proxyParams, {req, res}, {userSays: result.msg.messageText})
+      _createWebhookResponse(proxyParams, {req, res}, {userMessage: result.msg})
     }
   }).on('failed', (errorMessage) => {
     debug(`Job failed: ${util.inspect(errorMessage)}`)

@@ -1,11 +1,11 @@
-greetings
+wrong DTMF
 
 #bot
 Hi
 
 #me
 Hello
-BUTTON 123w*#
+BUTTON button1
 
 #bot
 Goodbye
