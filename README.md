@@ -25,8 +25,8 @@ This connector is separated into two parts.
 
 Supports DTMF (w is 0,5s delay)
 
-#me
 ```
+#me
 BUTTON 0123456789*#w
 ```
 
@@ -34,11 +34,18 @@ BUTTON 0123456789*#w
 ## Limitations
 1. Twilio uses Text To Speech, and Speech To Text. A test can fail if 
 TTS or STT is not converting the text well.
-2. Special fail cases:
+1. It is not possible to send DTML and speech like this:
+```
+#me
+Hello
+BUTTON 1
+```
+
+1. Special fail cases:
    * If the dialed number is wrong, or not permitted, then the testcase will fail with error
    * If the bot answers the phone, then error handling follows Botium standards
    * In every other case (For example he is busy, or picks up the phone but does not say anything, or number is temporary not available...) then the test will fail with timeout
-3. Flow:
+1. Flow:
    * We expect that the bot starts the conversation. (Otherwise call initiated, but you got error while phone ringing: error sending to bot Error: Illegal state, conversation should be started by bot!)
    * Cant assert that call is ended like this:
 ```
@@ -205,7 +212,7 @@ This demo requires you to emulate bot, for TWILIO_IVR_TO capability use our own 
     > npm install
     > npm test
 
-If your phone is ringing pick it up, and say 'Hi' - and after Botium greets you back, say "goodbye" and hang up. Test case completed.
+If your phone is ringing pick it up, and say 'Hi' - and after Botium greets you or plays DTMF tones, say "goodbye" and hang up. Test case completed.
 
 ## Supported Capabilities
 
@@ -244,4 +251,6 @@ Depending on how fast your IVR responds, the default Botium timeout of 10 second
 * Increasing STT accuracy
 * Asserter to check call state 
 * Better solution for one me-says case
-* Cancel phone call if conversation test finished succesful 
+* Cancel phone call if conversation test finished succesful
+* Better test case termination if the DTMF specification is wrong. 
+(Now Twilio got 500 from proxy, so terminates the call. Connector does not know about the error) 

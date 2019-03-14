@@ -39,10 +39,13 @@ const _createWebhookResponse = (proxyParams, expressContext, communicationContex
       for (let key of userMessage.buttons[0].payload) {
         if (!((key >= '0' && key <= '9') || key === '*' || key === '#' || key === 'w')) {
           errorMessage = `Invalid character "${key}" in DTMF specification "${userMessage.buttons[0].payload}". Accepted keys are "0123456789 #* w" (w is for wait 0.5s)`
+          break
         }
       }
     }
   }
+
+  debug(`Sending error message ${errorMessage}`)
 
   if (errorMessage) {
     return res.send(500, errorMessage)
