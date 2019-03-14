@@ -1,0 +1,15 @@
+conversation
+
+#bot
+
+#me
+hello
+
+#bot
+Are you kidding?
+
+#me
+yes
+
+#bot
+You said: yes
