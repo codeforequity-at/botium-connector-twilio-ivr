@@ -86,18 +86,18 @@ const _setupEndpoints = (proxyParams) => {
     extended: true
   }))
   app.post(WEBHOOK_ENDPOINT_START, (req, res) => {
-    debug(`Event received on start webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus}`)
+    debug(`Event received on 'start' webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus}`)
     // We start the conversation always by bot. So we dont send userSays here
     _createWebhookResponse(proxyParams, {req, res}, {})
   })
 
   app.post(WEBHOOK_ENDPOINT_NEXT, (req, res) => {
-    debug(`Event received on next webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus} SpeechResult ${req.body.SpeechResult} `)
+    debug(`Event received on 'next' webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus} SpeechResult ${req.body.SpeechResult} `)
     _createJob(proxyParams, {req, res}, {botSays: req.body.SpeechResult})
   })
 
   app.post(WEBHOOK_STATUS_CALLBACK, (req, res) => {
-    debug(`Event received on status callback webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus}`)
+    debug(`Event received on 'status callback' webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus}`)
 
     let event
     if (req.body.CallStatus === 'completed') {
@@ -113,6 +113,8 @@ const _setupEndpoints = (proxyParams) => {
     if (event) {
       _createJob(proxyParams, {req, res}, {event})
     }
+
+    res.status(200).end()
   })
 
   app.listen(proxyParams.port, () => {

@@ -58,7 +58,7 @@ class BotiumConnectorTwilioIvr {
   }
 
   async UserSays (msg) {
-    debug(`UserSays called ${util.inspect(msg)}`)
+    debug(`UserSays called`)
     if (this.convoSession.status.endedByBotReason) {
       throw new Error(`Bot already ended the call ${this.convoSession.status.endedByBotReason}`)
     }
@@ -218,10 +218,7 @@ class BotiumConnectorTwilioIvr {
       to: this.caps[Capabilities.TWILIO_IVR_TO],
       from: this.caps[Capabilities.TWILIO_IVR_FROM],
       statusCallback: `${this.caps[Capabilities.TWILIO_IVR_PUBLICURL]}${WEBHOOK_STATUS_CALLBACK}`,
-      // Dont get busy event???
-      statusCallbackEvent: ['completed', 'busy', 'failed', 'no-answer']
-      // statusCallbackEvent: ['queued', 'ringing', 'in-progress', 'completed', 'busy', 'failed', 'no-answer', 'initiated', 'answered']
-
+      statusCallbackEvent: ['completed']
     }
     debug(`Initiating call ${util.inspect(callParams)}`)
     return this.client.calls
