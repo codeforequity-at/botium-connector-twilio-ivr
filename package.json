@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.2.0",
+    "botium-core": "^1.4.12",
     "debug": "^3.2.6",
     "express": "^4.16.4",
     "express-list-endpoints": "^4.0.0",

@@ -1,14 +1,14 @@
-const caps = require('./botium').botium.Capabilities
+require('dotenv').config()
 
-const accountSid = caps.TWILIO_IVR_ACCOUNT_SID
-const authToken = caps.TWILIO_IVR_AUTH_TOKEN
+const accountSid = process.env.TWILIO_IVR_ACCOUNT_SID
+const authToken = process.env.TWILIO_IVR_AUTH_TOKEN
 const client = require('twilio')(accountSid, authToken)
 
 client.calls
   .create({
     url: 'http://demo.twilio.com/docs/voice.xml',
-    to: caps.TWILIO_IVR_TO,
-    from: caps.TWILIO_IVR_FROM
+    to: process.env.TWILIO_IVR_TO,
+    from: process.env.TWILIO_IVR_FROM
   })
   .then(call => console.log(call.sid))
   .done()

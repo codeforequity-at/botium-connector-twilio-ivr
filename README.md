@@ -23,18 +23,18 @@ This connector is separated into two parts.
   * [Botium Box](https://www.botium.at)
 * The Connector, and the Webhooks are communicating via __Redis__  
 
-Supports DTMF (w is 0,5s delay)
+Supports DTMF (accepted characters: "0123456789*#w". w is 0,5s delay). Example:
 
 ```
 #me
-BUTTON 0123456789*#w
+BUTTON 012w345
 ```
 
 
 ## Limitations
 1. Twilio uses Text To Speech, and Speech To Text. A test can fail if 
 TTS or STT is not converting the text well.
-1. It is not possible to send DTML and speech like this:
+1. It is not possible to send DTMF and speech like this:
 ```
 #me
 Hello
@@ -198,7 +198,9 @@ Open the file _botium.json_ in your working directory fill it. See Supported Cap
 
 Botium setup is ready, you can begin to write your [BotiumScript](https://github.com/codeforequity-at/botium-core/wiki/Botium-Scripting) files.
 
-## How to start sample
+## Samples
+
+### Connector to human sample
 
 There is a small demo in [samples/human](./samples/human) with Botium Bindings.  
 
@@ -213,6 +215,17 @@ This demo requires you to emulate bot, for TWILIO_IVR_TO capability use our own 
     > npm test
 
 If your phone is ringing pick it up, and say 'Hi' - and after Botium greets you or plays DTMF tones, say "goodbye" and hang up. Test case completed.
+
+### Connector to Sample chatbot
+start redis
+start chatbot (runs on 3010)
+start ngrok for chatbot (ngrok http 3010)
+put chatbot ngrok url as webhook for chatbot telephone number in Twilio (http://xxx.ngrok.io/voice/)
+and into chatbot/.env
+
+start ngrok for webhook (ngrok http 3000) same port as webhook param
+start proxy (ngrok URL, port 3000)
+test.TWILIO_IVR_PUBLICURL webhook http://xxx.ngrok.io
 
 ## Supported Capabilities
 
