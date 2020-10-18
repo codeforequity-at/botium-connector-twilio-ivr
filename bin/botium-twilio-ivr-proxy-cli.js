@@ -3,8 +3,6 @@ const util = require('util')
 const yargsCmd = require('yargs')
 const debug = require('debug')('botium-twilio-ivr-proxy-cli')
 
-const startProxy = require('../src/proxy').startProxy
-
 const wrapHandler = (builder) => {
   const origHandler = builder.handler
   builder.handler = (argv) => {
@@ -47,10 +45,11 @@ yargsCmd.usage('Botium Twilio IVR Proxy\n\nUsage: $0 [options]') // eslint-disab
           default: 'en-US'
         })
     },
-    handler: startProxy
+    handler: require('../src/proxy').startProxy
   }))
   .option('verbose', {
     alias: 'v',
+    type: 'boolean',
     describe: 'Enable verbose output (also read from env variable "BOTIUM_TWILIO_IVR_VERBOSE" - "1" means verbose)',
     default: false
   })

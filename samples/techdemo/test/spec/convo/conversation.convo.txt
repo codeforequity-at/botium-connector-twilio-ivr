@@ -2,14 +2,14 @@ conversation
 
 #bot
 
-#me
-hello
-
 #bot
-Are you kidding?
 
 #me
-yes
+BUTTON 1
 
 #bot
-You said: yes
+
+#me
+BUTTON 1
+
+#bot

@@ -1,192 +1,186 @@
-const util = require('util')
 const express = require('express')
-const listEndpoints = require('express-list-endpoints')
 const bodyParser = require('body-parser')
+const { VoiceResponse } = require('twilio').twiml
 const debug = require('debug')('botium-twilio-ivr-proxy')
-const {VoiceResponse} = require('twilio').twiml
-const kue = require('kue')
-const {WEBHOOK_ENDPOINT_START, WEBHOOK_ENDPOINT_NEXT, WEBHOOK_STATUS_CALLBACK, getTopicName, EVENT_CALL_COMPLETED, EVENT_BOT_BUSY, EVENT_BOT_CALL_FAILED, EVENT_BOT_NO_ANSWER, EVENT_USER_DISCONNECTED, EVENT_CONFIRMED} = require('./shared')
 
-const startProxy = async (proxyParams) => {
-  proxyParams = Object.assign({sendTextAsPhraseHint: true}, proxyParams)
-  if (!proxyParams.publicurl) {
-    throw Error('Public URL is not set!')
+const {
+  WEBHOOK_ENDPOINT_START,
+  WEBHOOK_ENDPOINT_NEXT,
+  WEBHOOK_STATUS_CALLBACK,
+  EVENT_INIT_CALL,
+  EVENT_USER_SAYS,
+  EVENT_BOT_SAYS,
+  EVENT_CALL_COMPLETED,
+} = require('./shared')
+
+const _createWebhookResponse = async (sid, {req, res}, { sessionStore }) => {
+  debug(`Creating webhook response from context for call ${sid}`)
+
+  const twilioSession = await sessionStore.get(sid)
+  if (!twilioSession) {
+    debug(`No Twilio Session found for call ${sid}, returning error`)
+    return res.status(500).end()
   }
-  if (!proxyParams.port) {
-    throw Error('Port is not set!')
-  }
-  if (!proxyParams.languageCode) {
-    throw Error('LanguageCode is not set!')
-  }
-
-  this.queue = _setupRedis(proxyParams.redisurl)
-
-  await _setupEndpoints(proxyParams)
-}
-
-const _createWebhookResponse = (proxyParams, expressContext, communicationContext) => {
-  debug(`Creating webhook response from context ${util.inspect(communicationContext)}`)
-  // naming parameter collections to better understanding
-  const {publicurl, languageCode, sendTextAsPhraseHint} = proxyParams
-  const {res} = expressContext
-  let {errorMessage} = communicationContext
-  const {userMessage, hintBotSays, userDisconnected} = communicationContext
-
-  if (!errorMessage && userMessage && userMessage.buttons) {
-    if (userMessage.buttons.length !== 1) {
-      errorMessage = `Invalid number of buttons. Requires exact one button and has "${util.inspect(userMessage.buttons)}"`
-    } else {
-      for (let key of userMessage.buttons[0].payload) {
-        if (!((key >= '0' && key <= '9') || key === '*' || key === '#' || key === 'w')) {
-          errorMessage = `Invalid character "${key}" in DTMF specification "${userMessage.buttons[0].payload}". Accepted keys are "0123456789 #* w" (w is for wait 0.5s)`
-          break
-        }
-      }
-    }
+  if (!twilioSession.publicUrl || !twilioSession.languageCode) {
+    debug(`Twilio Session for call ${sid} not yet initialized (no publicUrl, languageCode)`)
+    return res.status(500).end()
   }
 
-  debug(`Sending error message ${errorMessage}`)
-
-  if (errorMessage) {
-    return res.send(500, errorMessage)
-  }
   const response = new VoiceResponse()
-  if (userDisconnected) {
-    response.hangup()
-  } else {
-    if (userMessage) {
-      // if we got buttons, then the buttons will be in messagetext too
-      // so lets check the button field first
-      if (userMessage.buttons) {
-        response.play({digits: userMessage.buttons[0].payload})
-      } else if (userMessage.messageText) {
-        response.say(
-          {
-            language: languageCode
+  for (const va of twilioSession.voiceActions) {
+    if (va.type === EVENT_USER_SAYS) {
+      if (va.buttons && va.buttons.length > 0) {
+        response.play({
+          digits: va.buttons[0].payload
+        })
+      } else if (va.messageText) {
+        response.say({
+            language: twilioSession.languageCode
           },
-          userMessage.messageText
-        )
+          va.messageText)
       }
     }
-
-    let gatherArgs = {
-      input: 'speech',
-      action: `${publicurl}${WEBHOOK_ENDPOINT_NEXT}`,
-      language: languageCode
-    }
-
-    if (sendTextAsPhraseHint && hintBotSays) {
-      gatherArgs.hints = hintBotSays
-    }
-
-    response.gather(gatherArgs)
   }
+  twilioSession.voiceActions = []
+  await sessionStore.set(sid, twilioSession)
 
-  const result = response.toString()
-  debug(`TwiML response created ${result}`)
+  response.gather({
+    input: 'speech',
+    action: `${twilioSession.publicUrl}${WEBHOOK_ENDPOINT_NEXT}`,
+    language: twilioSession.languageCode,
+    speechTimeout: 'auto',
+    actionOnEmptyResult: true
+  })
+
+  const twimlResponse = response.toString()
+  debug(`TwiML response created ${twimlResponse}`)
 
   res.type('application/xml')
-  res.send(result)
+  res.send(twimlResponse)
   res.status(200).end()
 }
 
-const _setupRedis = (redisUrl) => {
-  const queueSettings = {redis: redisUrl}
-  debug(`Connecting to Redis ${util.inspect(queueSettings)}`)
-  const queue = kue.createQueue(queueSettings)
-  queue.on('error', (err) => {
-    debug(`ERROR, Communication error with Redis '${util.inspect(queueSettings)}': ${util.inspect(err)}`)
-  })
+const setupEndpoints = ({ app, endpointBase, middleware, processInboundEvent, sessionStore }) => {
+  if (!endpointBase) endpointBase = '/'
+  else if (!endpointBase.endsWith('/')) endpointBase = endpointBase + '/'
 
-  return queue
-}
-
-const _setupEndpoints = (proxyParams) => {
-  const app = express()
-  app.use(bodyParser.urlencoded({
-    extended: true
-  }))
-  app.post(WEBHOOK_ENDPOINT_START, (req, res) => {
+  app.post(endpointBase + WEBHOOK_ENDPOINT_START, ...(middleware || []), async (req, res) => {
     debug(`Event received on 'start' webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus}`)
-    // We start the conversation always by bot. So we dont send userSays here
-    _createWebhookResponse(proxyParams, {req, res}, {})
+    await _createWebhookResponse(req.body.CallSid, {req, res}, { sessionStore })
   })
 
-  app.post(WEBHOOK_ENDPOINT_NEXT, (req, res) => {
+  app.post(endpointBase + WEBHOOK_ENDPOINT_NEXT, ...(middleware || []), async (req, res) => {
     debug(`Event received on 'next' webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus} SpeechResult ${req.body.SpeechResult} `)
-    _createJob(proxyParams, {req, res}, {botSays: req.body.SpeechResult})
+    if (req.body.SpeechResult) {
+      processInboundEvent({
+        sid: req.body.CallSid,
+        type: EVENT_BOT_SAYS,
+        botSays: req.body.SpeechResult,
+        sourceData: req.body
+      })
+    }
+    setTimeout(() => _createWebhookResponse(req.body.CallSid, {req, res}, { sessionStore }), 5000)
   })
 
-  // just test
-  app.get(WEBHOOK_ENDPOINT_NEXT, (req, res) => {
-    debug(`Event received on 'next' webhook BY GET. Body: ${util.inspect(req.body)}`)
-    res.status(200).end()
-  })
-
-  app.post(WEBHOOK_STATUS_CALLBACK, (req, res) => {
+  app.post(endpointBase + WEBHOOK_STATUS_CALLBACK, ...(middleware || []), async (req, res) => {
     debug(`Event received on 'status callback' webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus}`)
 
-    let event
+    const event = {
+      sid: req.body.CallSid,
+      sourceData: req.body
+    }
     if (req.body.CallStatus === 'completed') {
-      event = EVENT_CALL_COMPLETED
+      event.type = EVENT_CALL_COMPLETED
+      await sessionStore.delete(req.body.CallSid)
     } else if (req.body.CallStatus === 'busy') {
-      event = EVENT_BOT_BUSY
+      event.type = EVENT_CALL_COMPLETED
+      await sessionStore.delete(req.body.CallSid)
     } else if (req.body.CallStatus === 'failed') {
-      event = EVENT_BOT_CALL_FAILED
+      event.type = EVENT_CALL_COMPLETED
+      await sessionStore.delete(req.body.CallSid)
     } else if (req.body.CallStatus === 'no-answer') {
-      event = EVENT_BOT_NO_ANSWER
+      event.type = EVENT_CALL_COMPLETED
+      await sessionStore.delete(req.body.CallSid)
     }
 
-    if (event) {
-      _createJob(proxyParams, {req, res}, {event})
+    if (event.type) {
+      await processInboundEvent(event)
     }
-
     res.status(200).end()
-  })
-
-  app.listen(proxyParams.port, () => {
-    const message = `Botium Twilio IVR Proxy server is listening on port ${proxyParams.port} \nEndpoints: ${util.inspect(listEndpoints(app))}`
-    if (debug.enabled) {
-      debug(message)
-    } else {
-      console.log(message)
-    }
   })
 }
 
-const _createJob = (proxyParams, {req, res}, {botSays, event}) => {
-  const sid = req.body.CallSid
-  let jobData
-  if (botSays) {
-    jobData = {
-      msg: {
-        messageText: botSays
-      }
+const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) => {
+  debug(`Received outbound Event for call ${sid}: ${type}`)
+  let twilioSession = await sessionStore.get(sid)
+  if (!twilioSession) {
+    twilioSession = {
+      publicUrl: null,
+      languageCode: null,
+      voiceActions: []
     }
-  } else if (event) {
-    jobData = {event}
-  } else {
-    throw Error('Illegal stete. Nothing to process to the job')
   }
 
-  const job = this.queue.create(getTopicName(sid), jobData).save()
-  debug(`Job created: ${util.inspect(jobData)}`)
+  if (type === EVENT_INIT_CALL) {
+    const { publicUrl, languageCode } = rest
+    twilioSession.publicUrl = publicUrl
+    twilioSession.languageCode = languageCode
 
-  job.on('complete', (result) => {
-    debug('Job finished ', result)
-    if (result.event === EVENT_CONFIRMED) {
-      debug(`Job confirmed`)
-    } else if (result.event === EVENT_USER_DISCONNECTED) {
-      _createWebhookResponse(proxyParams, {req, res}, {userDisconnected: true})
-    } else {
-      _createWebhookResponse(proxyParams, {req, res}, {userMessage: result.msg})
+    if (!twilioSession.publicUrl.endsWith('/')) twilioSession.publicUrl = twilioSession.publicUrl + '/'
+    await sessionStore.set(sid, twilioSession)
+  } else if (type === EVENT_USER_SAYS) {
+    const { messageText, buttons } = rest
+
+    if (buttons && buttons.length > 0) {
+      for (let key of buttons[0].payload) {
+        if (!((key >= '0' && key <= '9') || key === '*' || key === '#' || key === 'w')) {
+          throw new Error(`Invalid character "${key}" in DTMF specification "${buttons[0].payload}". Accepted keys are "0123456789 #* w" (w is for wait 0.5s)`)
+        }
+      }
     }
-  }).on('failed', (errorMessage) => {
-    debug(`Job failed: ${util.inspect(errorMessage)}`)
-    _createWebhookResponse(proxyParams, {req, res}, {error: errorMessage})
+    twilioSession.voiceActions.push({
+      type,
+      messageText,
+      buttons
+    })
+    await sessionStore.set(sid, twilioSession)
+  }
+}
+
+const _inMemorySessionStore = () => {
+  const twilioSessions = {}
+  return {
+    get: (sid) => twilioSessions[sid],
+    set: (sid, data) => { twilioSessions[sid] = data },
+    delete: (sid) => { delete twilioSessions[sid] }
+  }
+}
+
+const startProxy = async ({ port, endpointBase, processInboundEvent }) => {
+  return new Promise((resolve, reject) => {
+    const app = express()
+    const sessionStore = _inMemorySessionStore()
+
+    setupEndpoints({
+      app,
+      middleware: [
+        bodyParser.json(),
+        bodyParser.urlencoded({ extended: true })
+      ],
+      endpointBase: endpointBase || '/',
+      processInboundEvent,
+      sessionStore
+    })
+
+    const proxy = app.listen(port, () => {
+      console.log(`Botium Twilio Inbound Messages proxy is listening on port ${port}`)
+      console.log(`Botium Twilio Inbound Messages endpoint available at http://127.0.0.1:${port}${endpointBase}`)
+      resolve({ proxy, processOutboundEvent: async ({ sid, ...rest }) => processOutboundEvent({ sid, ...rest }, { sessionStore })})
+    })
   })
 }
 
 module.exports = {
+  setupEndpoints,
   startProxy
 }

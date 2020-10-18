@@ -2,11 +2,12 @@
   "name": "techdemo",
   "version": "1.0.0",
   "scripts": {
-    "test": "mocha spec"
+    "test": "mocha spec",
+    "proxy": "botium-twilio-ivr-proxy-cli start --verbose  --languageCode de-DE --publicurl https://abe34ef5c287.ngrok.io"
   },
   "botium": {
     "convodirs": [
-      "spec\\convo"
+      "spec/convo"
     ],
     "expandConvos": true,
     "expandUtterancesToConvos": false

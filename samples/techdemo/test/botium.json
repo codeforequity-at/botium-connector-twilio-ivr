@@ -3,17 +3,14 @@
     "Capabilities": {
       "PROJECTNAME": "Botium Project Twilio IVR",
       "CONTAINERMODE": "twilio-ivr",
-      "TWILIO_IVR_ACCOUNT_SID": "ACd192a470dd0a1a4eb62dfa6b861ed2b9",
-      "TWILIO_IVR_AUTH_TOKEN": "7b8d202e232a4d6b74d93f2adb592f53",
-      "TWILIO_IVR_FROM": "+43720884437",
-      "TWILIO_IVR_TO": "+43720231657",
-      "TWILIO_IVR_TO_drei": "+43660303030",
-
-      "TWILIO_IVR_TO_me": "+36705719261",
-      "TWILIO_IVR_REDISURL" : "redis:localhost:6379",
-      "TWILIO_IVR_PUBLICURL": "http://86feec95.ngrok.io",
-      "TWILIO_LANGUAGE_CODE": "en-US",
-      "WAITFORBOTTIMEOUT": 500000
+      "WAITFORBOTTIMEOUT": 500000,
+      "TWILIO_IVR_ACCOUNT_SID": "...",
+      "TWILIO_IVR_AUTH_TOKEN": "...",
+      "TWILIO_IVR_FROM": "...",
+      "TWILIO_IVR_TO": "...",
+      "TWILIO_IVR_REDISURL" : "...",
+      "TWILIO_IVR_PUBLICURL": "...",
+      "TWILIO_LANGUAGE_CODE": "en-US"
     }
   }
 }
