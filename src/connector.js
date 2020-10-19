@@ -124,7 +124,7 @@ class BotiumConnectorTwilioIvr {
       sid: this.call.sid,
       type: EVENT_USER_SAYS,
       messageText: msg.messageText,
-      buttons: msg.buttons 
+      buttons: msg.buttons
     })
   }
 
@@ -157,7 +157,7 @@ class BotiumConnectorTwilioIvr {
       from: this.caps[Capabilities.TWILIO_IVR_FROM],
       record: this.caps[Capabilities.TWILIO_IVR_RECORD],
       statusCallback: `${endpointBase}${WEBHOOK_STATUS_CALLBACK}`,
-      statusCallbackEvent: ['completed','answered']
+      statusCallbackEvent: ['completed', 'answered']
     }
     debug(`Initiating call ${JSON.stringify(callParams)}`)
     return this.client.calls.create(callParams)
@@ -188,7 +188,7 @@ class BotiumConnectorTwilioIvr {
       this.eventListeners[type] = []
     }
     if (type === EVENT_BOT_SAYS) {
-      const botSays = {sender: 'bot', sourceData: rest.sourceData, messageText: rest.botSays}
+      const botSays = { sender: 'bot', sourceData: rest.sourceData, messageText: rest.botSays }
       this.queueBotSays(botSays)
     } else if (type === EVENT_CALL_FAILED) {
       debug(`Call for ${sid} failed: ${JSON.stringify(rest)}`)
@@ -245,8 +245,8 @@ class BotiumConnectorTwilioIvr {
         }
         if (this.processingEvents) {
           this._processInboundEvent(event)
-          .then(() => debug(`Processed Inbound Event: ${JSON.stringify(event)}`))
-          .catch((err) => debug(`Processing Inbound Event failed: ${err.message} - ${JSON.stringify(event)}`))
+            .then(() => debug(`Processed Inbound Event: ${JSON.stringify(event)}`))
+            .catch((err) => debug(`Processing Inbound Event failed: ${err.message} - ${JSON.stringify(event)}`))
         }
       })
       this.processOutboundEvent = (event) => {
@@ -263,8 +263,8 @@ class BotiumConnectorTwilioIvr {
         processInboundEvent: (event) => {
           if (this.processingEvents) {
             this._processInboundEvent(event)
-            .then(() => debug(`Processed Inbound Event: ${JSON.stringify(event)}`))
-            .catch((err) => debug(`Processing Inbound Event failed: ${err.message} - ${JSON.stringify(event)}`))
+              .then(() => debug(`Processed Inbound Event: ${JSON.stringify(event)}`))
+              .catch((err) => debug(`Processing Inbound Event failed: ${err.message} - ${JSON.stringify(event)}`))
           }
         }
       })

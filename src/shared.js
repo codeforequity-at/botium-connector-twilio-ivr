@@ -14,4 +14,3 @@ module.exports.EVENT_USER_SAYS = 'EVENT_USER_SAYS'
 
 module.exports.getTopicInbound = (topicBase) => `${topicBase || 'BOTIUM_TWILIO_IVR'}_INBOUND`
 module.exports.getTopicOutbound = (topicBase) => `${topicBase || 'BOTIUM_TWILIO_IVR'}_OUTBOUND`
-

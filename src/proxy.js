@@ -18,7 +18,7 @@ const {
   getTopicOutbound
 } = require('./shared')
 
-const _createWebhookResponse = async (sid, {req, res}, { sessionStore, wait }) => {
+const _createWebhookResponse = async (sid, { req, res }, { sessionStore, wait }) => {
   debug(`Creating webhook response from context for call ${sid}`)
 
   let twilioSession = await sessionStore.get(sid)
@@ -49,9 +49,9 @@ const _createWebhookResponse = async (sid, {req, res}, { sessionStore, wait }) =
         })
       } else if (va.messageText) {
         response.say({
-            language: twilioSession.languageCode
-          },
-          va.messageText)
+          language: twilioSession.languageCode
+        },
+        va.messageText)
       }
     }
   }
@@ -80,7 +80,7 @@ const setupEndpoints = ({ app, endpointBase, middleware, processInboundEvent, se
 
   app.post(endpointBase + WEBHOOK_ENDPOINT_START, ...(middleware || []), async (req, res) => {
     debug(`Event received on 'start' webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus}`)
-    await _createWebhookResponse(req.body.CallSid, {req, res}, { sessionStore })
+    await _createWebhookResponse(req.body.CallSid, { req, res }, { sessionStore })
   })
 
   app.post(endpointBase + WEBHOOK_ENDPOINT_NEXT, ...(middleware || []), async (req, res) => {
@@ -92,9 +92,9 @@ const setupEndpoints = ({ app, endpointBase, middleware, processInboundEvent, se
         botSays: req.body.SpeechResult,
         sourceData: req.body
       })
-      await _createWebhookResponse(req.body.CallSid, {req, res}, { sessionStore, wait: true })
+      await _createWebhookResponse(req.body.CallSid, { req, res }, { sessionStore, wait: true })
     } else {
-      await _createWebhookResponse(req.body.CallSid, {req, res}, { sessionStore, wait: false })
+      await _createWebhookResponse(req.body.CallSid, { req, res }, { sessionStore, wait: false })
     }
   })
 
@@ -153,7 +153,7 @@ const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) =>
     const { messageText, buttons } = rest
 
     if (buttons && buttons.length > 0) {
-      for (let key of buttons[0].payload) {
+      for (const key of buttons[0].payload) {
         if (!((key >= '0' && key <= '9') || key === '*' || key === '#' || key === 'w')) {
           throw new Error(`Invalid character "${key}" in DTMF specification "${buttons[0].payload}". Accepted keys are "0123456789 #* w" (w is for wait 0.5s)`)
         }
@@ -196,7 +196,7 @@ const startProxy = async ({ port, endpointBase, processInboundEvent, sessionStor
     const proxy = app.listen(port, () => {
       console.log(`Botium Twilio Inbound Messages proxy is listening on port ${port}`)
       console.log(`Botium Twilio Inbound Messages endpoint available at http://127.0.0.1:${port}${endpointBase}`)
-      resolve({ proxy, processOutboundEvent: async ({ sid, ...rest }) => processOutboundEvent({ sid, ...rest }, { sessionStore: useSessionStore })})
+      resolve({ proxy, processOutboundEvent: async ({ sid, ...rest }) => processOutboundEvent({ sid, ...rest }, { sessionStore: useSessionStore }) })
     })
   })
 }
@@ -219,10 +219,10 @@ const buildRedisHandlers = async (redisurl, topicBase) => {
       const content = await redisClient.get(sid)
       if (content) return JSON.parse(content)
     },
-    set: async (sid, data) => { 
+    set: async (sid, data) => {
       await redisClient.set(sid, JSON.stringify(data))
     },
-    delete: async (sid) => { 
+    delete: async (sid) => {
       await redisClient.del(sid)
     }
   }
@@ -252,7 +252,6 @@ const buildRedisHandlers = async (redisurl, topicBase) => {
       }
     }
   }
-
 }
 
 module.exports = {

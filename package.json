@@ -1,6 +1,6 @@
 {
   "name": "botium-connector-twilio-ivr",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Botium Connector for IVR by Twilio",
   "main": "dist/botium-connector-twilio-ivr-cjs.js",
   "module": "dist/botium-connector-twilio-ivr-es.js",
@@ -8,8 +8,9 @@
     "botium-twilio-ivr-proxy-cli": "./bin/botium-twilio-ivr-proxy-cli.js"
   },
   "scripts": {
-    "build": "npm run eslint && rollup -c",
-    "eslint": "eslint index.js"
+    "build": "npm run eslint && rollup -c && cp language-tags.csv dist",
+    "eslint": "eslint index.js src/**/*.js bin/**/*.js",
+    "eslint-fix": "eslint --fix index.js src/**/*.js bin/**/*.js"
   },
   "repository": {
     "type": "git",
