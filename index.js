@@ -21,7 +21,7 @@ module.exports = {
   PluginVersion: 1,
   PluginClass: PluginClass,
   PluginDesc: {
-    name: 'Botium Connector for IVR Systems',
+    name: 'Botium Connector for IVR Systems (with Twilio)',
     capabilities: [
       {
         name: 'TWILIO_IVR_ACCOUNT_SID',

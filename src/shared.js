@@ -24,7 +24,7 @@ module.exports.getCallbackUrl = (endpointBase, endpoint, endpointParams) => {
   if (endpointParams) {
     if (_.isString(endpointParams)) {
       result += '?' + endpointParams
-    } else if (endpointParams.length > 0) {
+    } else if (Object.keys(endpointParams).length > 0) {
       result += '?' + Object.keys(endpointParams).map(k => `${k}=${endpointParams[k]}`).join('&')
     }
   }
