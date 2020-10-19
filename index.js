@@ -61,10 +61,31 @@ module.exports = {
       },
       {
         name: 'TWILIO_IVR_PUBLICURL',
-        label: 'Public Url',
-        description: 'Public accessible Url of Botium Box (if different from the one you are seeing in your browser navigation bar)',
-        type: 'url',
-        required: false
+        label: 'Webhook Url',
+        description: 'Public accessible Webhook Url',
+        type: 'query',
+        required: true,
+        query: async (caps, ctx) => {
+          const baseLink = `${ctx.request.protocol}://${ctx.request.headers.host}/api/twilio`
+          return [{
+            name: baseLink,
+            key: baseLink
+          }]
+        }
+      },
+      {
+        name: 'TWILIO_IVR_PUBLICURLPARAMS',
+        label: 'Webhook Url Params',
+        description: 'Additional Webhook Url Parameters (Api Key)',
+        type: 'query',
+        required: true,
+        query: async (caps, ctx) => {
+          const keys = await ctx.db.query.apiKeys({ orderBy: 'name_ASC' }, '{ id name key }')
+          return keys.map(k => ({
+            name: k.name,
+            key: `APIKEY=${k.key}`
+          }))
+        }
       },
       {
         name: 'TWILIO_IVR_RECORD',

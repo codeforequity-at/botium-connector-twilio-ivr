@@ -1,7 +1,7 @@
 const fetch = require('node-fetch')
 const Redis = require('ioredis')
 const twilio = require('twilio')
-const debug = require('debug')('botium-twilio-ivr-connector')
+const debug = require('debug')('botium-connector-twilio-ivr-connector')
 
 const {
   WEBHOOK_ENDPOINT_START,
@@ -13,7 +13,8 @@ const {
   EVENT_CALL_FAILED,
   EVENT_CALL_STARTED,
   getTopicInbound,
-  getTopicOutbound
+  getTopicOutbound,
+  getCallbackUrl
 } = require('./shared')
 
 const { startProxy } = require('./proxy')
@@ -29,6 +30,7 @@ const Capabilities = {
   TWILIO_IVR_INBOUNDPORT: 'TWILIO_IVR_INBOUNDPORT',
   TWILIO_IVR_INBOUNDENDPOINT: 'TWILIO_IVR_INBOUNDENDPOINT',
   TWILIO_IVR_PUBLICURL: 'TWILIO_IVR_PUBLICURL',
+  TWILIO_IVR_PUBLICURLPARAMS: 'TWILIO_IVR_PUBLICURLPARAMS',
   TWILIO_IVR_RECORD: 'TWILIO_IVR_RECORD',
   TWILIO_IVR_REDIAL: 'TWILIO_IVR_REDIAL',
   TWILIO_IVR_WAIT_CALL_STARTED: 'TWILIO_IVR_WAIT_CALL_STARTED',
@@ -91,6 +93,7 @@ class BotiumConnectorTwilioIvr {
           sid: this.call.sid,
           type: EVENT_INIT_CALL,
           publicUrl: this.caps[Capabilities.TWILIO_IVR_PUBLICURL],
+          publicUrlParams: this.caps[Capabilities.TWILIO_IVR_PUBLICURLPARAMS],
           languageCode: this.caps[Capabilities.TWILIO_IVR_LANGUAGE_CODE],
           responseTime: this.caps[Capabilities.TWILIO_IVR_WAIT_BOTIUM_RESPONSE]
         })
@@ -152,11 +155,11 @@ class BotiumConnectorTwilioIvr {
     if (!endpointBase.endsWith('/')) endpointBase = endpointBase + '/'
 
     const callParams = {
-      url: `${endpointBase}${WEBHOOK_ENDPOINT_START}`,
+      url: getCallbackUrl(this.caps[Capabilities.TWILIO_IVR_PUBLICURL], WEBHOOK_ENDPOINT_START, this.caps[Capabilities.TWILIO_IVR_PUBLICURLPARAMS]),
       to: this.caps[Capabilities.TWILIO_IVR_TO],
       from: this.caps[Capabilities.TWILIO_IVR_FROM],
       record: this.caps[Capabilities.TWILIO_IVR_RECORD],
-      statusCallback: `${endpointBase}${WEBHOOK_STATUS_CALLBACK}`,
+      statusCallback: getCallbackUrl(this.caps[Capabilities.TWILIO_IVR_PUBLICURL], WEBHOOK_STATUS_CALLBACK, this.caps[Capabilities.TWILIO_IVR_PUBLICURLPARAMS]),
       statusCallbackEvent: ['completed', 'answered']
     }
     debug(`Initiating call ${JSON.stringify(callParams)}`)

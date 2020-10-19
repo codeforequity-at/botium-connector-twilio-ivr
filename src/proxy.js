@@ -2,7 +2,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const Redis = require('ioredis')
 const { VoiceResponse } = require('twilio').twiml
-const debug = require('debug')('botium-twilio-ivr-proxy')
+const debug = require('debug')('botium-connector-twilio-ivr-proxy')
 
 const {
   WEBHOOK_ENDPOINT_START,
@@ -15,7 +15,8 @@ const {
   EVENT_CALL_FAILED,
   EVENT_CALL_STARTED,
   getTopicInbound,
-  getTopicOutbound
+  getTopicOutbound,
+  getCallbackUrl
 } = require('./shared')
 
 const _createWebhookResponse = async (sid, { req, res }, { sessionStore, wait }) => {
@@ -60,7 +61,7 @@ const _createWebhookResponse = async (sid, { req, res }, { sessionStore, wait })
 
   response.gather({
     input: 'speech',
-    action: `${twilioSession.publicUrl}${WEBHOOK_ENDPOINT_NEXT}`,
+    action: getCallbackUrl(twilioSession.publicUrl, WEBHOOK_ENDPOINT_NEXT, twilioSession.publicUrlParams),
     language: twilioSession.languageCode,
     speechTimeout: 'auto',
     actionOnEmptyResult: true
@@ -135,6 +136,7 @@ const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) =>
   if (!twilioSession) {
     twilioSession = {
       publicUrl: null,
+      publicUrlParams: {},
       languageCode: null,
       responseTime: 5000,
       voiceActions: []
@@ -142,8 +144,9 @@ const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) =>
   }
 
   if (type === EVENT_INIT_CALL) {
-    const { publicUrl, languageCode, responseTime } = rest
+    const { publicUrl, publicUrlParams, languageCode, responseTime } = rest
     twilioSession.publicUrl = publicUrl
+    twilioSession.publicUrlParams = publicUrlParams
     twilioSession.languageCode = languageCode
     twilioSession.responseTime = responseTime
 

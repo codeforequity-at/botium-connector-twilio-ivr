@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "test": "mocha spec",
-    "proxy": "botium-twilio-ivr-proxy-cli start --verbose"
+    "proxy": "botium-twilio-ivr-proxy-cli start --port 4000 --verbose"
   },
   "botium": {
     "convodirs": [
