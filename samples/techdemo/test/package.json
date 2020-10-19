@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "test": "mocha spec",
-    "proxy": "botium-twilio-ivr-proxy-cli start --verbose  --languageCode de-DE --publicurl https://abe34ef5c287.ngrok.io"
+    "proxy": "botium-twilio-ivr-proxy-cli start --verbose"
   },
   "botium": {
     "convodirs": [

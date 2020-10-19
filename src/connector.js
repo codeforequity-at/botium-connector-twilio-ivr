@@ -1,4 +1,5 @@
 const fetch = require('node-fetch')
+const Redis = require('ioredis')
 const twilio = require('twilio')
 const debug = require('debug')('botium-twilio-ivr-connector')
 
@@ -10,7 +11,9 @@ const {
   EVENT_BOT_SAYS,
   EVENT_CALL_COMPLETED,
   EVENT_CALL_FAILED,
-  EVENT_CALL_STARTED
+  EVENT_CALL_STARTED,
+  getTopicInbound,
+  getTopicOutbound
 } = require('./shared')
 
 const { startProxy } = require('./proxy')
@@ -22,6 +25,7 @@ const Capabilities = {
   TWILIO_IVR_TO: 'TWILIO_IVR_TO',
   TWILIO_IVR_LANGUAGE_CODE: 'TWILIO_IVR_LANGUAGE_CODE',
   TWILIO_IVR_REDISURL: 'TWILIO_IVR_REDISURL',
+  TWILIO_IVR_REDIS_TOPICBASE: 'TWILIO_IVR_REDIS_TOPICBASE',
   TWILIO_IVR_INBOUNDPORT: 'TWILIO_IVR_INBOUNDPORT',
   TWILIO_IVR_INBOUNDENDPOINT: 'TWILIO_IVR_INBOUNDENDPOINT',
   TWILIO_IVR_PUBLICURL: 'TWILIO_IVR_PUBLICURL',
@@ -221,7 +225,38 @@ class BotiumConnectorTwilioIvr {
   }
 
   async _buildInbound () {
-    if (this.caps[Capabilities.TWILIO_IVR_INBOUNDPORT]) {
+    if (this.caps[Capabilities.TWILIO_IVR_REDISURL]) {
+      const topicOutbound = getTopicOutbound(this.caps[Capabilities.TWILIO_IVR_REDIS_TOPICBASE])
+
+      const redisurl = this.caps[Capabilities.TWILIO_IVR_REDISURL]
+      this.redisSubscriber = new Redis(redisurl)
+      this.redisSubscriber.on('connect', () => {
+        debug(`Redis subscriber connected to ${JSON.stringify(redisurl || 'default')}`)
+      })
+      this.redisClient = new Redis(redisurl)
+      this.redisClient.on('connect', () => {
+        debug(`Redis client connected to ${JSON.stringify(redisurl || 'default')}`)
+      })
+      this.redisSubscriber.on('message', (channel, event) => {
+        try {
+          event = JSON.parse(event)
+        } catch (err) {
+          return debug(`WARNING: received non-json message from ${channel}, ignoring: ${event}`)
+        }
+        if (this.processingEvents) {
+          this._processInboundEvent(event)
+          .then(() => debug(`Processed Inbound Event: ${JSON.stringify(event)}`))
+          .catch((err) => debug(`Processing Inbound Event failed: ${err.message} - ${JSON.stringify(event)}`))
+        }
+      })
+      this.processOutboundEvent = (event) => {
+        try {
+          this.redisClient.publish(topicOutbound, JSON.stringify(event))
+        } catch (err) {
+          debug(`Error while publishing to redis: ${err.message}`)
+        }
+      }
+    } else if (this.caps[Capabilities.TWILIO_IVR_INBOUNDPORT]) {
       const { proxy, processOutboundEvent } = await startProxy({
         port: this.caps[Capabilities.TWILIO_IVR_INBOUNDPORT],
         endpointBase: this.caps[Capabilities.TWILIO_IVR_INBOUNDENDPOINT],
@@ -235,20 +270,49 @@ class BotiumConnectorTwilioIvr {
       })
       this.proxy = proxy
       this.processOutboundEvent = processOutboundEvent
+    } else {
+      throw new Error('No inbound channel configured (either HTTP inbound or redis')
     }
   }
 
   async _subscribeInbound () {
     this.eventListeners = {}
     this.processingEvents = true
+    if (this.redisSubscriber) {
+      const topicInbound = getTopicInbound(this.caps[Capabilities.TWILIO_IVR_REDIS_TOPICBASE])
+      try {
+        const count = await this.redisSubscriber.subscribe(topicInbound)
+        debug(`Redis subscribed to ${count} channels. Listening for inbound messages on the ${topicInbound} channel.`)
+      } catch (err) {
+        debug(err)
+        throw new Error(`Redis failed to subscribe channel ${topicInbound}: ${err.message || err}`)
+      }
+    }
   }
 
   async _unsubscribeInbound () {
     this.processingEvents = false
+    if (this.redisSubscriber) {
+      const topicInbound = getTopicInbound(this.caps[Capabilities.TWILIO_IVR_REDIS_TOPICBASE])
+      try {
+        await this.redisSubscriber.unsubscribe(topicInbound)
+        debug(`Redis unsubscribed from ${topicInbound} channel.`)
+      } catch (err) {
+        debug(err)
+        throw new Error(`Redis failed to unsubscribe channel ${topicInbound}: ${err.message || err}`)
+      }
+    }
   }
 
   async _cleanInbound () {
-
+    if (this.redisSubscriber) {
+      this.redisSubscriber.disconnect()
+      this.redisSubscriber = null
+    }
+    if (this.redisClient) {
+      this.redisClient.disconnect()
+      this.redisClient = null
+    }
     if (this.proxy) {
       this.proxy.close()
       this.proxy = null

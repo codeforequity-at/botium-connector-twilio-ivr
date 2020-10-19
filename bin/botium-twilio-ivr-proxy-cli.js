@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 const util = require('util')
 const yargsCmd = require('yargs')
+const { buildRedisHandlers, startProxy } = require('../src/proxy')
+
 const debug = require('debug')('botium-twilio-ivr-proxy-cli')
 
 const wrapHandler = (builder) => {
@@ -32,20 +34,20 @@ yargsCmd.usage('Botium Twilio IVR Proxy\n\nUsage: $0 [options]') // eslint-disab
           number: true,
           default: 5001
         })
-        .option('publicurl', {
-          describe: 'Public URL for the webhook ex "https://my-webhook-host.com" (also read from env variable "BOTIUM_TWILIO_IVR_PUBLICURL")',
-          demandOption: true
-        })
         .option('redisurl', {
           describe: 'Redis connection url, ex "redis://my-redis-host:6379" (also read from env variable "BOTIUM_TWILIO_IVR_REDISURL")',
           demandOption: false
         })
-        .option('languageCode', {
-          describe: 'The language code used for the call, like "en-US" (also read from env variable BOTIUM_TWILIO_IVR_LANGUAGE_CODE")',
-          default: 'en-US'
-        })
     },
-    handler: require('../src/proxy').startProxy
+    handler: async (argv) => {
+      const { sessionStore, processInboundEvent } = await buildRedisHandlers(argv.redisurl)
+      await startProxy({
+        port: argv.port,
+        endpointBase: '/',
+        processInboundEvent,
+        sessionStore
+      })
+    }
   }))
   .option('verbose', {
     alias: 'v',

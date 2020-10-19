@@ -1,5 +1,6 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+const Redis = require('ioredis')
 const { VoiceResponse } = require('twilio').twiml
 const debug = require('debug')('botium-twilio-ivr-proxy')
 
@@ -12,13 +13,15 @@ const {
   EVENT_BOT_SAYS,
   EVENT_CALL_COMPLETED,
   EVENT_CALL_FAILED,
-  EVENT_CALL_STARTED
+  EVENT_CALL_STARTED,
+  getTopicInbound,
+  getTopicOutbound
 } = require('./shared')
 
 const _createWebhookResponse = async (sid, {req, res}, { sessionStore, wait }) => {
   debug(`Creating webhook response from context for call ${sid}`)
 
-  const twilioSession = await sessionStore.get(sid)
+  let twilioSession = await sessionStore.get(sid)
   if (!twilioSession) {
     debug(`No Twilio Session found for call ${sid}, returning error`)
     return res.status(500).end()
@@ -27,7 +30,11 @@ const _createWebhookResponse = async (sid, {req, res}, { sessionStore, wait }) =
   if (wait && twilioSession.responseTime) {
     await new Promise((resolve) => setTimeout(() => resolve(), twilioSession.responseTime))
   }
-
+  twilioSession = await sessionStore.get(sid)
+  if (!twilioSession) {
+    debug(`No Twilio Session found for call ${sid}, returning error`)
+    return res.status(500).end()
+  }
   if (!twilioSession.publicUrl || !twilioSession.languageCode) {
     debug(`Twilio Session for call ${sid} not yet initialized (no publicUrl, languageCode)`)
     return res.status(500).end()
@@ -124,6 +131,7 @@ const setupEndpoints = ({ app, endpointBase, middleware, processInboundEvent, se
 const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) => {
   debug(`Received outbound Event for call ${sid}: ${type}`)
   let twilioSession = await sessionStore.get(sid)
+  console.log('processOutboundEvent session', twilioSession)
   if (!twilioSession) {
     twilioSession = {
       publicUrl: null,
@@ -169,10 +177,10 @@ const _inMemorySessionStore = () => {
   }
 }
 
-const startProxy = async ({ port, endpointBase, processInboundEvent }) => {
+const startProxy = async ({ port, endpointBase, processInboundEvent, sessionStore }) => {
   return new Promise((resolve, reject) => {
     const app = express()
-    const sessionStore = _inMemorySessionStore()
+    const useSessionStore = sessionStore || _inMemorySessionStore()
 
     setupEndpoints({
       app,
@@ -182,18 +190,73 @@ const startProxy = async ({ port, endpointBase, processInboundEvent }) => {
       ],
       endpointBase: endpointBase || '/',
       processInboundEvent,
-      sessionStore
+      sessionStore: useSessionStore
     })
 
     const proxy = app.listen(port, () => {
       console.log(`Botium Twilio Inbound Messages proxy is listening on port ${port}`)
       console.log(`Botium Twilio Inbound Messages endpoint available at http://127.0.0.1:${port}${endpointBase}`)
-      resolve({ proxy, processOutboundEvent: async ({ sid, ...rest }) => processOutboundEvent({ sid, ...rest }, { sessionStore })})
+      resolve({ proxy, processOutboundEvent: async ({ sid, ...rest }) => processOutboundEvent({ sid, ...rest }, { sessionStore: useSessionStore })})
     })
   })
 }
 
+const buildRedisHandlers = async (redisurl, topicBase) => {
+  const topicInbound = getTopicInbound(topicBase)
+  const topicOutbound = getTopicOutbound(topicBase)
+
+  const redisSubscriber = new Redis(redisurl)
+  redisSubscriber.on('connect', () => {
+    debug(`Redis subscriber connected to ${JSON.stringify(redisurl || 'default')}`)
+  })
+  const redisClient = new Redis(redisurl)
+  redisClient.on('connect', () => {
+    debug(`Redis client connected to ${JSON.stringify(redisurl || 'default')}`)
+  })
+
+  const sessionStore = {
+    get: async (sid) => {
+      const content = await redisClient.get(sid)
+      if (content) return JSON.parse(content)
+    },
+    set: async (sid, data) => { 
+      await redisClient.set(sid, JSON.stringify(data))
+    },
+    delete: async (sid) => { 
+      await redisClient.del(sid)
+    }
+  }
+
+  const count = await redisSubscriber.subscribe(topicOutbound)
+  debug(`Redis subscribed to ${count} channels. Listening for outbound messages on the ${topicOutbound} channel.`)
+  redisSubscriber.on('message', (channel, event) => {
+    try {
+      event = JSON.parse(event)
+      processOutboundEvent(event, { sessionStore })
+    } catch (err) {
+      return debug(`WARNING: received non-json message from ${channel}, ignoring: ${event}`)
+    }
+  })
+
+  return {
+    sessionStore,
+    disconnect: async () => {
+      redisSubscriber.disconnect()
+      redisClient.disconnect()
+    },
+    processInboundEvent: async (event) => {
+      try {
+        redisClient.publish(topicInbound, JSON.stringify(event))
+      } catch (err) {
+        debug(`Error while publishing to redis: ${err.message}`)
+      }
+    }
+  }
+
+}
+
 module.exports = {
+  buildRedisHandlers,
   setupEndpoints,
   startProxy
 }
