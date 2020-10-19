@@ -11,9 +11,11 @@ const {
   EVENT_USER_SAYS,
   EVENT_BOT_SAYS,
   EVENT_CALL_COMPLETED,
+  EVENT_CALL_FAILED,
+  EVENT_CALL_STARTED
 } = require('./shared')
 
-const _createWebhookResponse = async (sid, {req, res}, { sessionStore }) => {
+const _createWebhookResponse = async (sid, {req, res}, { sessionStore, wait }) => {
   debug(`Creating webhook response from context for call ${sid}`)
 
   const twilioSession = await sessionStore.get(sid)
@@ -21,6 +23,11 @@ const _createWebhookResponse = async (sid, {req, res}, { sessionStore }) => {
     debug(`No Twilio Session found for call ${sid}, returning error`)
     return res.status(500).end()
   }
+
+  if (wait && twilioSession.responseTime) {
+    await new Promise((resolve) => setTimeout(() => resolve(), twilioSession.responseTime))
+  }
+
   if (!twilioSession.publicUrl || !twilioSession.languageCode) {
     debug(`Twilio Session for call ${sid} not yet initialized (no publicUrl, languageCode)`)
     return res.status(500).end()
@@ -78,8 +85,10 @@ const setupEndpoints = ({ app, endpointBase, middleware, processInboundEvent, se
         botSays: req.body.SpeechResult,
         sourceData: req.body
       })
+      await _createWebhookResponse(req.body.CallSid, {req, res}, { sessionStore, wait: true })
+    } else {
+      await _createWebhookResponse(req.body.CallSid, {req, res}, { sessionStore, wait: false })
     }
-    setTimeout(() => _createWebhookResponse(req.body.CallSid, {req, res}, { sessionStore }), 5000)
   })
 
   app.post(endpointBase + WEBHOOK_STATUS_CALLBACK, ...(middleware || []), async (req, res) => {
@@ -93,14 +102,16 @@ const setupEndpoints = ({ app, endpointBase, middleware, processInboundEvent, se
       event.type = EVENT_CALL_COMPLETED
       await sessionStore.delete(req.body.CallSid)
     } else if (req.body.CallStatus === 'busy') {
-      event.type = EVENT_CALL_COMPLETED
+      event.type = EVENT_CALL_FAILED
       await sessionStore.delete(req.body.CallSid)
     } else if (req.body.CallStatus === 'failed') {
-      event.type = EVENT_CALL_COMPLETED
+      event.type = EVENT_CALL_FAILED
       await sessionStore.delete(req.body.CallSid)
     } else if (req.body.CallStatus === 'no-answer') {
-      event.type = EVENT_CALL_COMPLETED
+      event.type = EVENT_CALL_FAILED
       await sessionStore.delete(req.body.CallSid)
+    } else if (req.body.CallStatus === 'in-progress') {
+      event.type = EVENT_CALL_STARTED
     }
 
     if (event.type) {
@@ -117,14 +128,16 @@ const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) =>
     twilioSession = {
       publicUrl: null,
       languageCode: null,
+      responseTime: 5000,
       voiceActions: []
     }
   }
 
   if (type === EVENT_INIT_CALL) {
-    const { publicUrl, languageCode } = rest
+    const { publicUrl, languageCode, responseTime } = rest
     twilioSession.publicUrl = publicUrl
     twilioSession.languageCode = languageCode
+    twilioSession.responseTime = responseTime
 
     if (!twilioSession.publicUrl.endsWith('/')) twilioSession.publicUrl = twilioSession.publicUrl + '/'
     await sessionStore.set(sid, twilioSession)
