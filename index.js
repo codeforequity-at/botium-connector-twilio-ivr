@@ -63,29 +63,15 @@ module.exports = {
         name: 'TWILIO_IVR_PUBLICURL',
         label: 'Webhook Url',
         description: 'Public accessible Webhook Url',
-        type: 'query',
-        required: true,
-        query: async (caps, ctx) => {
-          const baseLink = `${ctx.request.protocol}://${ctx.request.headers.host}/api/twilio`
-          return [{
-            name: baseLink,
-            key: baseLink
-          }]
-        }
+        type: 'url',
+        required: true
       },
       {
         name: 'TWILIO_IVR_PUBLICURLPARAMS',
         label: 'Webhook Url Params',
-        description: 'Additional Webhook Url Parameters (Api Key)',
-        type: 'query',
-        required: true,
-        query: async (caps, ctx) => {
-          const keys = await ctx.db.query.apiKeys({ orderBy: 'name_ASC' }, '{ id name key }')
-          return keys.map(k => ({
-            name: k.name,
-            key: `APIKEY=${k.key}`
-          }))
-        }
+        description: 'Additional Webhook Url Parameters',
+        type: 'json',
+        required: false
       },
       {
         name: 'TWILIO_IVR_RECORD',
