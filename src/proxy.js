@@ -132,7 +132,7 @@ const setupEndpoints = ({ app, endpointBase, middleware, processInboundEvent, se
 const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) => {
   debug(`Received outbound Event for call ${sid}: ${type}`)
   let twilioSession = await sessionStore.get(sid)
-  console.log('processOutboundEvent session', twilioSession)
+
   if (!twilioSession) {
     twilioSession = {
       publicUrl: null,
