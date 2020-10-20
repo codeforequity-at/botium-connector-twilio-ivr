@@ -19,6 +19,19 @@ const {
   getCallbackUrl
 } = require('./shared')
 
+const isValidDtmf = (keys, fail) => {
+  for (const key of keys) {
+    if (!((key >= '0' && key <= '9') || key === '*' || key === '#' || key === 'w')) {
+      if (fail) {
+        throw new Error(`Invalid character "${key}" in DTMF specification "${keys}". Accepted keys are "0123456789 #* w" (w is for wait 0.5s)`)
+      } else {
+        return false
+      }
+    }
+  }
+  return true
+}
+
 const _createWebhookResponse = async (sid, { req, res }, { sessionStore, wait }) => {
   debug(`Creating webhook response from context for call ${sid}`)
 
@@ -45,14 +58,22 @@ const _createWebhookResponse = async (sid, { req, res }, { sessionStore, wait })
   for (const va of twilioSession.voiceActions) {
     if (va.type === EVENT_USER_SAYS) {
       if (va.buttons && va.buttons.length > 0) {
+        const buttonText = va.buttons[0].payload || va.buttons[0].text
+        isValidDtmf(buttonText, true)
         response.play({
           digits: va.buttons[0].payload
         })
       } else if (va.messageText) {
-        response.say({
-          language: twilioSession.languageCode
-        },
-        va.messageText)
+        if (isValidDtmf(va.messageText, false)) {
+          response.play({
+            digits: va.messageText
+          })
+        } else {
+          response.say({
+            language: twilioSession.languageCode
+          },
+          va.messageText)
+        }
       }
     }
   }
