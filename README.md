@@ -21,7 +21,7 @@ This connector is separated into two parts.
   * [Botium CLI](https://github.com/codeforequity-at/botium-cli/)
   * [Botium Bindings](https://github.com/codeforequity-at/botium-bindings/)
   * [Botium Box](https://www.botium.at)
-* The Connector, and the Webhooks are communicating via __Redis__  
+* The Connector, and the Webhooks are communicating via __Redis__ 
 
 Supports DTMF (accepted characters: "0123456789*#w". w is 0,5s delay). Example:
 
@@ -32,89 +32,25 @@ BUTTON 012w345
 
 
 ## Limitations
-1. Twilio uses Text To Speech, and Speech To Text. A test can fail if 
-TTS or STT is not converting the text well.
-1. It is not possible to send DTMF and speech like this:
+1. Twilio uses Text To Speech, and Speech To Text. A test can fail if TTS or STT is not converting the text well.
+2. It is not possible to send DTMF and speech like this:
 ```
 #me
 Hello
 BUTTON 1
 ```
 
-1. Special fail cases:
+3. Special fail cases:
    * If the dialed number is wrong, or not permitted, then the testcase will fail with error
    * If the bot answers the phone, then error handling follows Botium standards
    * In every other case (For example he is busy, or picks up the phone but does not say anything, or number is temporary not available...) then the test will fail with timeout
-1. Flow:
+4. Flow:
    * We expect that the bot starts the conversation. (Otherwise call initiated, but you got error while phone ringing: error sending to bot Error: Illegal state, conversation should be started by bot!)
-   * Cant assert that call is ended like this:
-```
-...
-#me
-Goodbye!
-
-#bot
-Goodbye!
-CALL_ENDED
-...
-```
-
-   * Just one bot-says is allowed. So this is not possible:
-
-```
-...
-#bot
-Hello!
-
-#bot
-How are you?
-...
-```
-But this is:  
-```
-...
-#bot
-Hello! How are you?
-...
-```
-Otherwise the test will fail with timeout.
-   * Just one me-says allowed. It is possible to use more:
-```
-...
-#bot
-Hi.
-
-#me
-Hello!
-
-#me
-Goodbye!
-
-#bot
-Goodbye!
-...
-```
-But it will implemented as:  
-```
-...
-#bot
-Hi.
-
-#me
-Hello!
-
-#bot
-Goodbye!
-
-#me
-Goodbye!
-...
-```
 
 ## Prerequisites
 
 * __Node.js and NPM__
-* a __Redis__ instance (Cloud hosted free tier for example from [redislabs](https://redislabs.com/) will do as a starter)
+* (optional) a __Redis__ instance (Cloud hosted free tier for example from [redislabs](https://redislabs.com/) will do as a starter)
 * __Twilio Account__ (Trial account is not sufficent because [Limitations](https://www.twilio.com/docs/usage/tutorials/how-to-use-your-free-trial-account#trial-account-restrictions-and-limitations)) 
     * Sign up at [Twilio](https://www.twilio.com/try-twilio)
     * [Upgrade trial account](https://www.twilio.com/docs/usage/tutorials/how-to-use-your-free-trial-account#how-to-upgrade-your-account)
@@ -147,11 +83,15 @@ When using __Botium Box__:
 
 _Already integrated into Botium Box, no setup required_
 
-## Install and Run the Botium webhook service
+## Install and Run the Botium Twilio Webhook Proxy
 
-Call is initiated by the Connector. 
-After the call is established, it is controlled by Botium webhook service via 3 webhooks. 
-Botium webhook service communicates with the Connector via Redis. 
+**If the host you are running Botium can be reached from publich internet (directly or via a service like ngrok) you can skip this step**
+
+Twilio communicates with Botium by calling webhooks published locally by Botium. If the host you are running Botium is not reachable from public internet, you have to run an additional component on a host which can be reached from public internet.
+
+* Call is initiated by the Botium Connector
+* After the call is established, it is controlled by Botium Twilio Webhook Proxy via 3 webhooks
+* Botium Twilio Webhook Proxy communicates with the Botium Connector via Redis
 
 If you are using Botium Box, then the Botium webhook service is integrated.
 
@@ -164,16 +104,11 @@ There are several options required for running the Botium webhook service:
 
 _--port_: Local port to listen (optional, default _5001_)
 
-_--publicurl_: Public URL for the webhook. If you are using ngrok, then it looks like this: 'https://xxxxxxxx.ngrok.io'
-
-_--languageCode_: The language code used for the call, like 'en-US' (optional, default _en-US_) ([All language code](https://www.twilio.com/docs/voice/twiml/gather#languagetags))
-
- _--redisurl_: Redis connection url, ex "redis://my-redis-host:6379" 
+_--redisurl_: Redis connection url, ex "redis://my-redis-host:6379" 
 
 Botium is providing the service, but you have to take care for connectivity and process management yourself:
 * If your server is not reachable from the internet, consider to use a service like [ngrok](https://ngrok.com/) for publishing your endpoint (If you use ngrok start it on the port of the Webhook Service)
 * For process management, logging, monitoring we recommend to use [pm2](https://pm2.keymetrics.io)
-
 
 ## Connecting Twilio to Botium
 
@@ -190,42 +125,14 @@ Open the file _botium.json_ in your working directory fill it. See Supported Cap
       "TWILIO_IVR_FROM": "...",
       "TWILIO_IVR_TO": "...",
       "TWILIO_IVR_REDISURL" : "...",
-      "TWILIO_IVR_HOST": "..."
+      "TWILIO_IVR_PUBLICURL": "...",
+      "TWILIO_IVR_LANGUAGE_CODE": "en-US"
     }
   }
 }
 ```
 
 Botium setup is ready, you can begin to write your [BotiumScript](https://github.com/codeforequity-at/botium-core/wiki/Botium-Scripting) files.
-
-## Samples
-
-### Connector to human sample
-
-There is a small demo in [samples/human](./samples/human) with Botium Bindings.  
-
-To start it you have to create botium.json. For help see Supported Capabilities. 
-So to start it you have to create botium.json from [sample.botium.json](./samples/human/sample.botium.json)
-
-This demo requires you to emulate bot, for TWILIO_IVR_TO capability use our own number.
- 
- Afterwards:
-
-    > npm install
-    > npm test
-
-If your phone is ringing pick it up, and say 'Hi' - and after Botium greets you or plays DTMF tones, say "goodbye" and hang up. Test case completed.
-
-### Connector to Sample chatbot
-start redis
-start chatbot (runs on 3010)
-start ngrok for chatbot (ngrok http 3010)
-put chatbot ngrok url as webhook for chatbot telephone number in Twilio (http://xxx.ngrok.io/voice/)
-and into chatbot/.env
-
-start ngrok for webhook (ngrok http 3000) same port as webhook param
-start proxy (ngrok URL, port 3000)
-test.TWILIO_IVR_PUBLICURL webhook http://xxx.ngrok.io
 
 ## Supported Capabilities
 
@@ -247,13 +154,41 @@ See authToken in Prerequisites
 
 Arbitary telephone number. It must be [enabled](https://www.twilio.com/console/voice/calls/geo-permissions/low-risk) 
 
-### TWILIO_IVR_REDISURL
-
-Same as for Botium webhook service. The default url for local redis is 'redis://localhost:6379'. 
-
 ### TWILIO_IVR_PUBLICURL
 
-Same public url for Botium webhook service. If you are using ngrok, then it looks like this: 'http://xxxxxxxx.ngrok.io' 
+URL on which Botium (or the Botium Twilio Webhook Proxy) is reachable from public internet.
+
+If you are using ngrok, then it looks like this: _http://xxxxxxxx.ngrok.io_
+
+### TWILIO_IVR_INBOUNDPORT and TWILIO_IVR_INBOUNDENDPOINT
+_only required when **NOT** using the Botium Twilio Webhook Proxy_
+
+Local port and endpoint to be used for launching the webhook
+
+### TWILIO_IVR_REDISURL and TWILIO_IVR_REDIS_TOPICBASE
+_only required when using the Botium Twilio Webhook Proxy_
+
+Redis Url and base topic name for Redis subscription topic.
+
+The default url for local redis is _redis://localhost:6379_
+
+### TWILIO_IVR_LANGUAGE_CODE
+The language code used for the call, like 'en-US' (optional, default _en-US_) ([All language code](https://www.twilio.com/docs/voice/twiml/gather#languagetags))
+
+### TWILIO_IVR_RECORD
+Record the call (true/false)
+
+### TWILIO_IVR_REDIAL
+Number of redial attempts if no answer (default 5)
+
+### TWILIO_IVR_WAIT_CALL_STARTED
+tbd
+
+### TWILIO_IVR_WAIT_CALL_COMPLETED
+tbd
+
+### TWILIO_IVR_WAIT_BOTIUM_RESPONSE
+tbd
 
 ### WAITFORBOTTIMEOUT
 
@@ -263,7 +198,4 @@ Depending on how fast your IVR responds, the default Botium timeout of 10 second
 * Error case fail instead of timeout
 * Increasing STT accuracy
 * Asserter to check call state 
-* Better solution for one me-says case
 * Cancel phone call if conversation test finished succesful
-* Better test case termination if the DTMF specification is wrong. 
-(Now Twilio got 500 from proxy, so terminates the call. Connector does not know about the error) 
