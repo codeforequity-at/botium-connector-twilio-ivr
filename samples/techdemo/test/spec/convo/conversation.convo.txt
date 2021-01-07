@@ -2,16 +2,11 @@ conversation
 
 #bot
 
-#bot
-
-#bot
-
 #me
 BUTTON 2
 
 #bot
 
-#me
-BUTTON 1
-
-#bot
+#end
+PAUSE 10000
+CHECKTWILIOSMS hello

@@ -134,6 +134,34 @@ Open the file _botium.json_ in your working directory fill it. See Supported Cap
 
 Botium setup is ready, you can begin to write your [BotiumScript](https://github.com/codeforequity-at/botium-core/wiki/Botium-Scripting) files.
 
+## Checking for received SMS
+
+A common use case is to verify that an SMS has been received during the call to an IVR engine.
+
+Add the asserter to your botium.json:
+
+```
+  ...
+  "ASSERTERS": [
+    {
+      "ref": "CHECKTWILIOSMS",
+      "src": "botium-connector-twilio-ivr/CHECKTWILIOSMS"
+    }
+  ]
+  ...
+```
+
+Use it in the _#end_-section to verify that an SMS has been received by the caller:
+
+    #end
+    CHECKTWILIOSMS
+
+Or check for the content of the SMS (a common pattern is to give it some time to receive the SMS, in this example 10 seconds):
+
+    #end
+    PAUSE 10000
+    CHECKTWILIOSMS welcome to our service
+
 ## Supported Capabilities
 
 Set the capability __CONTAINERMODE__ to __twilio-ivr__ to activate this connector.

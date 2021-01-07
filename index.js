@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const PluginClass = require('./src/connector')
+const AsserterSmsClass = require('./src/assertersms')
 
 const languageCsv = fs.readFileSync(path.join(__dirname, 'language-tags.csv'), 'utf-8')
 const languages = languageCsv.split('\n').filter((l, i) => l.length && i >= 1).map(l => l.trim()).map(l => {
@@ -80,5 +81,8 @@ module.exports = {
         type: 'boolean'
       }
     ]
+  },
+  PluginAsserters: {
+    CHECKTWILIOSMS: AsserterSmsClass
   }
 }

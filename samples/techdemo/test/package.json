@@ -15,6 +15,7 @@
   "devDependencies": {
     "mocha": "latest",
     "botium-bindings": "latest",
+    "botium-core": "https://github.com/codeforequity-at/botium-core.git#develop",
     "botium-connector-twilio-ivr": "../../../"
   }
 }

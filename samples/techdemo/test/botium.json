@@ -8,9 +8,14 @@
       "TWILIO_IVR_AUTH_TOKEN": "...",
       "TWILIO_IVR_FROM": "...",
       "TWILIO_IVR_TO": "...",
-      "TWILIO_IVR_REDISURL" : "...",
       "TWILIO_IVR_PUBLICURL": "...",
-      "TWILIO_IVR_LANGUAGE_CODE": "en-US"
+      "TWILIO_IVR_LANGUAGE_CODE": "en-GB",
+      "ASSERTERS": [
+        {
+          "ref": "CHECKTWILIOSMS",
+          "src": "botium-connector-twilio-ivr/CHECKTWILIOSMS"
+        }
+      ]
     }
   }
 }
