@@ -80,13 +80,19 @@ const _createWebhookResponse = async (sid, { req, res }, { sessionStore, wait })
   twilioSession.voiceActions = []
   await sessionStore.set(sid, twilioSession)
 
-  response.gather({
+  const gatherArgs = {
     input: 'speech',
     action: getCallbackUrl(twilioSession.publicUrl, WEBHOOK_ENDPOINT_NEXT, twilioSession.publicUrlParams),
     language: twilioSession.languageCode,
-    speechTimeout: 'auto',
+    speechModel: 'phone_call',
+    enhanced: true,
     actionOnEmptyResult: true
-  })
+  }
+  if (twilioSession.speechTimeout) {
+    gatherArgs.speechTimeout = twilioSession.speechTimeout
+  }
+
+  response.gather(gatherArgs)
 
   const twimlResponse = response.toString()
   debug(`TwiML response created ${twimlResponse}`)
@@ -165,10 +171,11 @@ const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) =>
   }
 
   if (type === EVENT_INIT_CALL) {
-    const { publicUrl, publicUrlParams, languageCode, responseTime } = rest
+    const { publicUrl, publicUrlParams, languageCode, speechTimeout, responseTime } = rest
     twilioSession.publicUrl = publicUrl
     twilioSession.publicUrlParams = publicUrlParams
     twilioSession.languageCode = languageCode
+    twilioSession.speechTimeout = speechTimeout
     twilioSession.responseTime = responseTime
 
     if (!twilioSession.publicUrl.endsWith('/')) twilioSession.publicUrl = twilioSession.publicUrl + '/'

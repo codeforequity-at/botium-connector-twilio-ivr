@@ -64,6 +64,7 @@ typings/
 .idea/
 
 # Project dependent
+test
 dist
 *.local.json
 package-lock.json

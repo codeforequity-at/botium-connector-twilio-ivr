@@ -64,27 +64,6 @@ app.post('/next-voice', (request, response) => {
   _createResponseVoice(response, output)
 })
 
-app.post('/next-gather', (req, res) => {
-  debug(`Event received on 'next-gather' webhook.`)
-
-  const vr = new VoiceResponse()
-
-  let parameters = {
-    input: 'speech',
-    action: `${process.env.URL}/next-voice`,
-    language: 'en-US',
-    timeout: 20
-  }
-
-  vr.gather(parameters)
-  const result = vr.toString()
-  debug(`TwiML response created ${result}`)
-
-  res.type('application/xml')
-  res.send(result)
-  res.status(200).end()
-})
-
 const _createResponseVoice = (res, output = {}) => {
   // naming parameter collections to better understanding
   const {botSays, disconnect} = output
@@ -93,7 +72,6 @@ const _createResponseVoice = (res, output = {}) => {
   if (disconnect) {
     vr.hangup()
   } else {
-    vr.say()
     if (botSays) {
       vr.say(
         {
@@ -101,10 +79,14 @@ const _createResponseVoice = (res, output = {}) => {
         },
         botSays
       )
-      vr.redirect(
-        `${process.env.URL}/next-gather`
-      )
     }
+    let parameters = {
+      input: 'speech',
+      action: `${process.env.URL}/next-voice`,
+      language: 'en-US',
+      timeout: 20
+    }
+    vr.gather(parameters)
   }
   const result = vr.toString()
   debug(`TwiML response created ${result}`)

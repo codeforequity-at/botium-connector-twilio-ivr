@@ -181,6 +181,9 @@ Record the call (true/false)
 ### TWILIO_IVR_REDIAL
 Number of redial attempts if no answer (default 5)
 
+### TWILIO_IVR_SPEECH_TIMEOUT
+tbd
+
 ### TWILIO_IVR_WAIT_CALL_STARTED
 tbd
 

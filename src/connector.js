@@ -25,6 +25,7 @@ const Capabilities = {
   TWILIO_IVR_FROM: 'TWILIO_IVR_FROM',
   TWILIO_IVR_TO: 'TWILIO_IVR_TO',
   TWILIO_IVR_LANGUAGE_CODE: 'TWILIO_IVR_LANGUAGE_CODE',
+  TWILIO_IVR_SPEECH_TIMEOUT: 'TWILIO_IVR_SPEECH_TIMEOUT',
   TWILIO_IVR_REDISURL: 'TWILIO_IVR_REDISURL',
   TWILIO_IVR_REDIS_TOPICBASE: 'TWILIO_IVR_REDIS_TOPICBASE',
   TWILIO_IVR_INBOUNDPORT: 'TWILIO_IVR_INBOUNDPORT',
@@ -95,6 +96,7 @@ class BotiumConnectorTwilioIvr {
           publicUrl: this.caps[Capabilities.TWILIO_IVR_PUBLICURL],
           publicUrlParams: this.caps[Capabilities.TWILIO_IVR_PUBLICURLPARAMS],
           languageCode: this.caps[Capabilities.TWILIO_IVR_LANGUAGE_CODE],
+          speechTimeout: this.caps[Capabilities.TWILIO_IVR_SPEECH_TIMEOUT],
           responseTime: this.caps[Capabilities.TWILIO_IVR_WAIT_BOTIUM_RESPONSE]
         })
         await this._waitForInboundEvent(EVENT_CALL_STARTED, this.caps[Capabilities.TWILIO_IVR_WAIT_CALL_STARTED])
@@ -120,7 +122,7 @@ class BotiumConnectorTwilioIvr {
 
   async UserSays (msg) {
     if (!this.processOutboundEvent || !this.call) {
-      throw new Error('Call not initialized')
+      throw new Error('Call already terminated (or not initialized)')
     }
     debug(`Sending outboundEvent EVENT_USER_SAYS for call ${this.call.sid}`)
     await this.processOutboundEvent({
