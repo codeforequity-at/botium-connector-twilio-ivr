@@ -3,10 +3,10 @@ conversation
 #bot
 
 #me
-BUTTON 2
+BUTTON 3
 
 #bot
 
 #end
 PAUSE 10000
-CHECKTWILIOSMS hello
+CHECKTWILIOSMS welcome

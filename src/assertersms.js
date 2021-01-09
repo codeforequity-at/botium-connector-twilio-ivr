@@ -7,16 +7,16 @@ class BotiumAsserterTwilioSms {
     this.globalArgs = args
   }
 
-  assertConvoStep ({ transcriptStep, transcript, ...rest }) {
+  assertConvoStep ({ transcript, ...rest }) {
     return this._checkMessage({
-      dateSentAfter: transcript && transcript.length > 0 ? transcript[0].stepBegin : transcriptStep.stepBegin,
+      dateSentAfter: transcript.convoBegin,
       ...rest
     })
   }
 
   async assertConvoEnd ({ transcript, ...rest }) {
     return this._checkMessage({
-      dateSentAfter: transcript.steps[0].stepBegin,
+      dateSentAfter: transcript.convoBegin,
       ...rest
     })
   }
@@ -33,11 +33,13 @@ class BotiumAsserterTwilioSms {
         to: receiver,
         limit: 10
       })
-      debug(`Twilio Client received ${messages.length} SMS for ${receiver} since ${dateSentAfter}`)
+      messages = messages.filter(m => m.direction === 'inbound')
+      debug(`Twilio Client received ${messages.length} inbound SMS for ${receiver} since ${dateSentAfter}`)
       if (debug.enabled) {
         for (const [i, m] of messages.entries()) {
           debug(`#${i}: SID ${m.sid} SENT: ${m.dateSent} FROM: ${m.from} TO: ${m.to} BODY: ${m.body}`)
         }
+        
       }
     } catch (err) {
       throw new Error(`Twilio Client failed to list received SMS: ${err.message}`)
