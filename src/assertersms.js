@@ -39,7 +39,6 @@ class BotiumAsserterTwilioSms {
         for (const [i, m] of messages.entries()) {
           debug(`#${i}: SID ${m.sid} SENT: ${m.dateSent} FROM: ${m.from} TO: ${m.to} BODY: ${m.body}`)
         }
-        
       }
     } catch (err) {
       throw new Error(`Twilio Client failed to list received SMS: ${err.message}`)
