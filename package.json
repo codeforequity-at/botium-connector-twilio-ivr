@@ -1,6 +1,6 @@
 {
   "name": "botium-connector-twilio-ivr",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Botium Connector for IVR by Twilio",
   "main": "dist/botium-connector-twilio-ivr-cjs.js",
   "module": "dist/botium-connector-twilio-ivr-es.js",
