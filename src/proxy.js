@@ -1,4 +1,5 @@
 const express = require('express')
+const { v1: uuidV1 } = require('uuid')
 const bodyParser = require('body-parser')
 const Redis = require('ioredis')
 const { VoiceResponse } = require('twilio').twiml
@@ -7,6 +8,7 @@ const debug = require('debug')('botium-connector-twilio-ivr-proxy')
 const {
   WEBHOOK_ENDPOINT_START,
   WEBHOOK_ENDPOINT_NEXT,
+  WEBHOOK_ENDPOINT_FILE,
   WEBHOOK_STATUS_CALLBACK,
   EVENT_INIT_CALL,
   EVENT_USER_SAYS,
@@ -77,6 +79,8 @@ const _createWebhookResponse = async (sid, { req, res }, { sessionStore, wait })
           }
           response.say(sayArgs, va.messageText)
         }
+      } else if (va.playUrl) {
+        response.play(va.playUrl)
       }
     }
   }
@@ -133,6 +137,23 @@ const setupEndpoints = ({ app, endpointBase, middleware, processInboundEvent, se
     }
   })
 
+  app.get(endpointBase + WEBHOOK_ENDPOINT_FILE, ...(middleware || []), async (req, res) => {
+    const twilioSession = await sessionStore.get(req.params.sessionId)
+    if (twilioSession && twilioSession.files && twilioSession.files[req.params.fileId]) {
+      const fileInfo = twilioSession.files[req.params.fileId]
+      debug(`File retrieved. SID: ${req.params.sessionId} File ${req.params.fileId}/${fileInfo.mediaUri}`)
+      const buffer = Buffer.from(fileInfo.base64, 'base64')
+      res.writeHead(200, {
+        'Content-Type': fileInfo.mimeType,
+        'Content-Length': buffer.length
+      })
+      res.end(buffer)
+    } else {
+      debug(`File not found. SID: ${req.params.sessionId} File ${req.params.fileId}/${req.params.fileName}`)
+      res.status(404).end()
+    }
+  })
+
   app.post(endpointBase + WEBHOOK_STATUS_CALLBACK, ...(middleware || []), async (req, res) => {
     debug(`Event received on 'status callback' webhook. SID: ${req.body.CallSid} Status ${req.body.CallStatus}`)
 
@@ -174,6 +195,7 @@ const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) =>
       languageCode: null,
       responseTime: 5000,
       voice: null,
+      files: {},
       voiceActions: [],
       speechModel: 'phone_call',
       enhanced: true
@@ -194,7 +216,7 @@ const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) =>
     if (!twilioSession.publicUrl.endsWith('/')) twilioSession.publicUrl = twilioSession.publicUrl + '/'
     await sessionStore.set(sid, twilioSession)
   } else if (type === EVENT_USER_SAYS) {
-    const { messageText, audioBase64, buttons } = rest
+    const { messageText, buttons, mediaUri, base64, mimeType } = rest
 
     if (buttons && buttons.length > 0) {
       for (const key of buttons[0].payload) {
@@ -203,12 +225,21 @@ const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) =>
         }
       }
     }
-    twilioSession.voiceActions.push({
+    const voiceAction = {
       type,
       messageText,
-      audioBase64,
       buttons
-    })
+    }
+    if (base64) {
+      const fileId = uuidV1()
+      voiceAction.playUrl = getCallbackUrl(twilioSession.publicUrl, WEBHOOK_ENDPOINT_FILE.replace(':sessionId', sid).replace(':fileId', fileId), twilioSession.publicUrlParams)
+      twilioSession.files[fileId] = {
+        mediaUri,
+        base64,
+        mimeType
+      }
+    }
+    twilioSession.voiceActions.push(voiceAction)
     await sessionStore.set(sid, twilioSession)
   }
 }

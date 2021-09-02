@@ -131,12 +131,37 @@ class BotiumConnectorTwilioIvr {
       throw new Error('Call already terminated (or not initialized)')
     }
     debug(`Sending outboundEvent EVENT_USER_SAYS for call ${this.call.sid}`)
-    await this.processOutboundEvent({
-      sid: this.call.sid,
-      type: EVENT_USER_SAYS,
-      messageText: msg.messageText,
-      buttons: msg.buttons
-    })
+    if (msg.media && msg.media.length > 0) {
+      const media = msg.media[0]
+      if (!media.buffer) {
+        throw new Error(`Media attachment ${media.mediaUri} not downloaded`)
+      }
+      if (!media.mimeType || !media.mimeType.startsWith('audio')) {
+        throw new Error(`Media attachment ${media.mediaUri} mime type ${media.mimeType || '<empty>'} not supported (audio only)`)
+      }
+      const base64 = media.buffer.toString('base64')
+
+      msg.attachments = msg.attachments || []
+      msg.attachments.push({
+        name: media.mediaUri,
+        mimeType: media.mimeType,
+        base64
+      })
+      await this.processOutboundEvent({
+        sid: this.call.sid,
+        type: EVENT_USER_SAYS,
+        mediaUri: media.mediaUri,
+        mimeType: media.mimeType,
+        base64
+      })
+    } else {
+      await this.processOutboundEvent({
+        sid: this.call.sid,
+        type: EVENT_USER_SAYS,
+        messageText: msg.messageText,
+        buttons: msg.buttons
+      })
+    }
   }
 
   async Stop () {

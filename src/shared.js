@@ -2,6 +2,7 @@ const _ = require('lodash')
 
 module.exports.WEBHOOK_ENDPOINT_START = 'twilio-ivr/start'
 module.exports.WEBHOOK_ENDPOINT_NEXT = 'twilio-ivr/next'
+module.exports.WEBHOOK_ENDPOINT_FILE = 'twilio-ivr/file/:sessionId/:fileId'
 module.exports.WEBHOOK_STATUS_CALLBACK = 'twilio-ivr/status'
 
 // proxy -> connector events
