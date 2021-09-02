@@ -203,6 +203,12 @@ The default url for local redis is _redis://localhost:6379_
 ### TWILIO_IVR_LANGUAGE_CODE
 The language code used for the call, like 'en-US' (optional, default _en-US_) ([All language code](https://www.twilio.com/docs/voice/twiml/gather#languagetags))
 
+### TWILIO_IVR_SPEECH_MODEL
+See [Twilio Docs](https://www.twilio.com/docs/voice/twiml/gather#speechmodel)
+
+### TWILIO_IVR_SPEECH_MODEL_ENHANCED
+See [Twilio Docs](https://www.twilio.com/docs/voice/twiml/gather#enhanced)
+
 ### TWILIO_IVR_RECORD
 Record the call (true/false)
 

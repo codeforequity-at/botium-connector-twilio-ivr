@@ -25,7 +25,10 @@ const Capabilities = {
   TWILIO_IVR_FROM: 'TWILIO_IVR_FROM',
   TWILIO_IVR_TO: 'TWILIO_IVR_TO',
   TWILIO_IVR_LANGUAGE_CODE: 'TWILIO_IVR_LANGUAGE_CODE',
+  TWILIO_IVR_VOICE: 'TWILIO_IVR_VOICE',
   TWILIO_IVR_SPEECH_TIMEOUT: 'TWILIO_IVR_SPEECH_TIMEOUT',
+  TWILIO_IVR_SPEECH_MODEL: 'TWILIO_IVR_SPEECH_MODEL',
+  TWILIO_IVR_SPEECH_MODEL_ENHANCED: 'TWILIO_IVR_SPEECH_MODEL_ENHANCED',
   TWILIO_IVR_REDISURL: 'TWILIO_IVR_REDISURL',
   TWILIO_IVR_REDIS_TOPICBASE: 'TWILIO_IVR_REDIS_TOPICBASE',
   TWILIO_IVR_INBOUNDPORT: 'TWILIO_IVR_INBOUNDPORT',
@@ -96,6 +99,9 @@ class BotiumConnectorTwilioIvr {
           publicUrl: this.caps[Capabilities.TWILIO_IVR_PUBLICURL],
           publicUrlParams: this.caps[Capabilities.TWILIO_IVR_PUBLICURLPARAMS],
           languageCode: this.caps[Capabilities.TWILIO_IVR_LANGUAGE_CODE],
+          voice: this.caps[Capabilities.TWILIO_IVR_VOICE],
+          speechModel: this.caps[Capabilities.TWILIO_IVR_SPEECH_MODEL],
+          enhanced: !!this.caps[Capabilities.TWILIO_IVR_SPEECH_MODEL_ENHANCED],
           speechTimeout: this.caps[Capabilities.TWILIO_IVR_SPEECH_TIMEOUT],
           responseTime: this.caps[Capabilities.TWILIO_IVR_WAIT_BOTIUM_RESPONSE]
         })

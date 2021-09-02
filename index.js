@@ -61,6 +61,31 @@ module.exports = {
         choices: languages
       },
       {
+        name: 'TWILIO_IVR_VOICE',
+        label: 'Voice for Speech Generation',
+        description: 'See Twilio Text-To-Speech-Console for the available options',
+        type: 'string',
+        required: true
+      },
+      {
+        name: 'TWILIO_IVR_SPEECH_MODEL',
+        label: 'Speech Model',
+        description: 'Twilio Speech Model (for Speech Recognition)',
+        type: 'choice',
+        required: true,
+        choices: [
+          { key: 'default', name: 'default' },
+          { key: 'numbers_and_commands', name: 'numbers_and_commands' },
+          { key: 'phone_call', name: 'phone_call' }
+        ]
+      },
+      {
+        name: 'TWILIO_IVR_SPEECH_MODEL_ENHANCED',
+        label: 'Use Enhanced Speech Model',
+        description: 'Only applicable for phone speech model',
+        type: 'boolean'
+      },
+      {
         name: 'TWILIO_IVR_PUBLICURL',
         label: 'Webhook Url',
         description: 'Public accessible Webhook Url',

@@ -69,10 +69,13 @@ const _createWebhookResponse = async (sid, { req, res }, { sessionStore, wait })
             digits: va.messageText
           })
         } else {
-          response.say({
+          const sayArgs = {
             language: twilioSession.languageCode
-          },
-          va.messageText)
+          }
+          if (twilioSession.voice) {
+            sayArgs.voice = twilioSession.voice
+          }
+          response.say(sayArgs, va.messageText)
         }
       }
     }
@@ -84,9 +87,13 @@ const _createWebhookResponse = async (sid, { req, res }, { sessionStore, wait })
     input: 'speech',
     action: getCallbackUrl(twilioSession.publicUrl, WEBHOOK_ENDPOINT_NEXT, twilioSession.publicUrlParams),
     language: twilioSession.languageCode,
-    speechModel: 'phone_call',
-    enhanced: true,
     actionOnEmptyResult: true
+  }
+  if (twilioSession.speechModel) {
+    gatherArgs.speechModel = twilioSession.speechModel
+    if (twilioSession.speechModel === 'phone_call') {
+      gatherArgs.enhanced = !!twilioSession.enhanced
+    }
   }
   if (twilioSession.speechTimeout) {
     gatherArgs.speechTimeout = twilioSession.speechTimeout
@@ -166,22 +173,28 @@ const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) =>
       publicUrlParams: {},
       languageCode: null,
       responseTime: 5000,
-      voiceActions: []
+      voice: null,
+      voiceActions: [],
+      speechModel: 'phone_call',
+      enhanced: true
     }
   }
 
   if (type === EVENT_INIT_CALL) {
-    const { publicUrl, publicUrlParams, languageCode, speechTimeout, responseTime } = rest
+    const { publicUrl, publicUrlParams, languageCode, voice, speechTimeout, responseTime, speechModel, enhanced } = rest
     twilioSession.publicUrl = publicUrl
     twilioSession.publicUrlParams = publicUrlParams
     twilioSession.languageCode = languageCode
+    twilioSession.voice = voice
     twilioSession.speechTimeout = speechTimeout
     twilioSession.responseTime = responseTime
+    twilioSession.speechModel = speechModel
+    twilioSession.enhanced = enhanced
 
     if (!twilioSession.publicUrl.endsWith('/')) twilioSession.publicUrl = twilioSession.publicUrl + '/'
     await sessionStore.set(sid, twilioSession)
   } else if (type === EVENT_USER_SAYS) {
-    const { messageText, buttons } = rest
+    const { messageText, audioBase64, buttons } = rest
 
     if (buttons && buttons.length > 0) {
       for (const key of buttons[0].payload) {
@@ -193,6 +206,7 @@ const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) =>
     twilioSession.voiceActions.push({
       type,
       messageText,
+      audioBase64,
       buttons
     })
     await sessionStore.set(sid, twilioSession)
