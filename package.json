@@ -45,7 +45,7 @@
     "express": "^4.17.1",
     "ioredis": "^4.27.9",
     "lodash": "^4.17.21",
-    "node-fetch": "^3.0.0",
+    "node-fetch": "^2.6.1",
     "twilio": "^3.67.1",
     "uuid": "^8.3.2",
     "yargs": "^17.1.1"
