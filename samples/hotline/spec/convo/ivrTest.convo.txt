@@ -1,0 +1,14 @@
+ivrTest
+
+#bot
+TEXT_CONTAINS_ANY_IC hello|press|support
+
+#me
+BUTTON 3
+
+#bot
+sen
+
+#end
+PAUSE 20000
+CHECKTWILIOSMS welcome to our hotline

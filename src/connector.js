@@ -45,6 +45,8 @@ const Defaults = {
   [Capabilities.TWILIO_IVR_RECORD]: false,
   [Capabilities.TWILIO_IVR_REDIAL]: 5,
   [Capabilities.TWILIO_IVR_LANGUAGE_CODE]: 'en-US',
+  [Capabilities.TWILIO_IVR_SPEECH_MODEL]: 'phone_call',
+  [Capabilities.TWILIO_IVR_SPEECH_MODEL_ENHANCED]: true,
   [Capabilities.TWILIO_IVR_WAIT_CALL_STARTED]: 20000,
   [Capabilities.TWILIO_IVR_WAIT_CALL_COMPLETED]: 10000,
   [Capabilities.TWILIO_IVR_WAIT_BOTIUM_RESPONSE]: 5000

@@ -1,0 +1,9 @@
+audio
+
+#bot
+TEXT_CONTAINS_ANY_IC hello|press|support
+
+#me
+MEDIA book_stay_in_london.wav
+
+#bot

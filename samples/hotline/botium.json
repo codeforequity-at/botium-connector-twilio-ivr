@@ -1,0 +1,31 @@
+{
+  "botium": {
+    "Capabilities": {
+      "PROJECTNAME": "Botium Project Twilio IVR",
+      "CONTAINERMODE": "twilio-ivr",
+      "TWILIO_IVR_ACCOUNT_SID": "...",
+      "TWILIO_IVR_AUTH_TOKEN": "...",
+      "TWILIO_IVR_FROM": "...",
+      "TWILIO_IVR_TO": "...",
+      "TWILIO_IVR_INBOUNDPORT" : "8888",
+      "TWILIO_IVR_PUBLICURL": "https://botiumtwiliodemo.ngrok.io",
+      "TWILIO_IVR_LANGUAGE_CODE": "en-GB",
+      "WAITFORBOTTIMEOUT": 30000,
+      "ASSERTERS": [
+        {
+          "ref": "CHECKTWILIOSMS",
+          "src": "botium-connector-twilio-ivr/CHECKTWILIOSMS"
+        }
+      ],
+      "USER_INPUTS": [
+        {
+          "ref": "MEDIA",
+          "src": "MediaInput",
+          "args": {
+            "downloadMedia": true
+          }
+        }
+      ]
+    }
+  }
+}

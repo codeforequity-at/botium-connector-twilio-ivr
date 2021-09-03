@@ -1,0 +1,20 @@
+{
+  "name": "botium-connector-twilio-ivr-sample-human",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "mocha spec --exit",
+    "ngrok": "ngrok http -subdomain=botiumtwiliodemo 8888"
+  },
+  "botium": {
+    "convodirs": [
+      "spec/convo"
+    ],
+    "expandConvos": true,
+    "expandUtterancesToConvos": false
+  },
+  "devDependencies": {
+    "mocha": "latest",
+    "botium-bindings": "latest",
+    "botium-connector-twilio-ivr": "../../"
+  }
+}

@@ -257,6 +257,7 @@ const startProxy = async ({ port, endpointBase, processInboundEvent, sessionStor
   return new Promise((resolve, reject) => {
     const app = express()
     const useSessionStore = sessionStore || _inMemorySessionStore()
+    endpointBase = endpointBase || '/'
 
     setupEndpoints({
       app,
@@ -264,7 +265,7 @@ const startProxy = async ({ port, endpointBase, processInboundEvent, sessionStor
         bodyParser.json(),
         bodyParser.urlencoded({ extended: true })
       ],
-      endpointBase: endpointBase || '/',
+      endpointBase: endpointBase,
       processInboundEvent,
       sessionStore: useSessionStore
     })
