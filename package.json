@@ -10,7 +10,9 @@
   "scripts": {
     "build": "npm run eslint && rollup -c && cp language-tags.csv dist",
     "eslint": "eslint index.js src/**/*.js bin/**/*.js",
-    "eslint-fix": "eslint --fix index.js src/**/*.js bin/**/*.js"
+    "eslint-fix": "eslint --fix index.js src/**/*.js bin/**/*.js",
+    "test": "echo 'Not implemented yet'",
+    "test-nightly": "echo 'Not implemented yet'"
   },
   "repository": {
     "type": "git",
@@ -46,8 +48,7 @@
     "express": "^4.17.1",
     "ioredis": "^4.27.9",
     "lodash": "^4.17.21",
-    "twilio": "^3.67.1",
-    "uuid": "^8.3.2",
+    "twilio": "^6.1.0",
     "yargs": "^17.1.1"
   },
   "overrides": {
