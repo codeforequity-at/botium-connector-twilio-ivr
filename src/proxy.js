@@ -1,5 +1,5 @@
+const { randomUUID } = require('crypto')
 const express = require('express')
-const { v1: uuidV1 } = require('uuid')
 const bodyParser = require('body-parser')
 const Redis = require('ioredis')
 const { VoiceResponse } = require('twilio').twiml
@@ -231,7 +231,7 @@ const processOutboundEvent = async ({ sid, type, ...rest }, { sessionStore }) =>
       buttons
     }
     if (base64) {
-      const fileId = uuidV1()
+      const fileId = randomUUID()
       voiceAction.playUrl = getCallbackUrl(twilioSession.publicUrl, WEBHOOK_ENDPOINT_FILE.replace(':sessionId', sid).replace(':fileId', fileId), twilioSession.publicUrlParams)
       twilioSession.files[fileId] = {
         mediaUri,
