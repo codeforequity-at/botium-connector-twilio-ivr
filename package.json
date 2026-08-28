@@ -10,7 +10,9 @@
   "scripts": {
     "build": "npm run eslint && rollup -c && cp language-tags.csv dist",
     "eslint": "eslint index.js src/**/*.js bin/**/*.js",
-    "eslint-fix": "eslint --fix index.js src/**/*.js bin/**/*.js"
+    "eslint-fix": "eslint --fix index.js src/**/*.js bin/**/*.js",
+    "test": "echo 'Not implemented yet'",
+    "test-nightly": "echo 'Not implemented yet'"
   },
   "repository": {
     "type": "git",
