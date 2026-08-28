@@ -1,4 +1,4 @@
-const fetch = require('node-fetch')
+const axios = require('axios')
 const Redis = require('ioredis')
 const twilio = require('twilio')
 const debug = require('debug')('botium-connector-twilio-ivr-connector')
@@ -209,9 +209,9 @@ class BotiumConnectorTwilioIvr {
     if (this.caps[Capabilities.TWILIO_IVR_RECORD] && rest.sourceData && rest.sourceData.RecordingUrl) {
       const mp3RecordingUrl = `${rest.sourceData.RecordingUrl}.mp3`
       try {
-        const res = await fetch(mp3RecordingUrl)
+        const res = await axios.get(mp3RecordingUrl, { responseType: 'arraybuffer' })
         debug(`Downloaded recording for ${sid} from ${mp3RecordingUrl}`)
-        const bodyBase64 = (await res.buffer()).toString('base64')
+        const bodyBase64 = Buffer.from(res.data).toString('base64')
         this.eventEmitter.emit('MESSAGE_ATTACHMENT', this.container, {
           base64: bodyBase64,
           mimeType: 'audio/mpeg'

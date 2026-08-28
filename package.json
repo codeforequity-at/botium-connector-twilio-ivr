@@ -1,6 +1,6 @@
 {
   "name": "botium-connector-twilio-ivr",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Botium Connector for IVR by Twilio",
   "main": "dist/botium-connector-twilio-ivr-cjs.js",
   "module": "dist/botium-connector-twilio-ivr-es.js",
@@ -41,13 +41,16 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.15.3",
+    "axios": "1.20.0",
     "debug": "^4.3.2",
     "express": "^4.17.1",
     "ioredis": "^4.27.9",
     "lodash": "^4.17.21",
-    "node-fetch": "^2.6.1",
     "twilio": "^3.67.1",
     "uuid": "^8.3.2",
     "yargs": "^17.1.1"
+  },
+  "overrides": {
+    "axios": "1.20.0"
   }
 }
